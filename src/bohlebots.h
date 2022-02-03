@@ -505,16 +505,15 @@ class BohleBots {
 
   void evaluatePixy()  // wird nur aufgerufen, wenn die Pixy überhaupt etwas sieht
   {
-    int my_signature = 1;  // wir spielen immer auf Signatur 1
-    int sieht_farbe = pixy.ccc.blocks[0].m_signature;
+    int goal = 1;  // pixy signatur, die benutzt wird im code
+    int pixyBlocks = pixy.ccc.blocks[0].m_signature;
 
-    if (sieht_farbe == my_signature) {
+    if (pixyBlocks == goal) {
       goalDirectionVar = -(pixy.ccc.blocks[0].m_x - 158) / 2;
-      int tor_breite = pixy.ccc.blocks[0].m_width;
-      int tor_hoehe = pixy.ccc.blocks[0].m_height;
-      // tor_entfernung_roh =  pixy.ccc.blocks[0].m_y-80;
-      int tor_entfernung_roh = pixy.ccc.blocks[0].m_y;
-      goalDistanceVar = (tor_entfernung_roh - tor_hoehe) / 4;  //-abs(tor_richtung)/10;
+      int goalWidth = pixy.ccc.blocks[0].m_width;
+      int goalHeight = pixy.ccc.blocks[0].m_height;
+      int goalDistanceRaw = pixy.ccc.blocks[0].m_y;
+      goalDistanceVar = (goalDistanceRaw - goalHeight) / 4;  //-abs(tor_richtung)/10;
       if (goalDistanceVar < 0)
         goalDistanceVar = 0;
       if (goalDistanceVar > 63)

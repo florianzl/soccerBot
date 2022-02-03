@@ -3,10 +3,9 @@
 */
 
 #include <Arduino.h>
+
 #include "bohlebots.h"
 BohleBots bot;
-
-
 
 // lässt jede led in bestimmter farbe für 0.5s leuchten
 void led(string color) {
@@ -28,6 +27,17 @@ void startBot() {
   bot.setze_kompass();
   Serial.println("Kompass gesetzt");
   led("GREEN");
+}
+
+//bot beschleunigt und kickt
+int shoot() {
+  // Zahl muss rausgefunden werden
+  if (bot.goalDistance < 10) {
+    bot.kick(30);
+    bot.fahre(0,0,0);
+  }
+  else 
+    bot.fahre(0,100,0);
 }
 
 // bot bleibt vor Tor stehen
@@ -99,7 +109,7 @@ void stopBot() {
 
 // bot fährt 2 richungen weiter als Ball bis er frontal zum Ball ist
 int directionBehindBall() {
-    if (bot.ballDirection() < 0) {
+  if (bot.ballDirection() < 0) {
     if (bot.ballDirection() == -6)
       return 8;
     else if (bot.ballDirection() == -7)
