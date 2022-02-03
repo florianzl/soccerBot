@@ -1,14 +1,14 @@
 /*
  * motor vorne rechts 1, hinten rechts 2, hinten links 3, vorne links 4
  * Logik : vorne rechts ist 1 und dann im Uhrzeigersinn
- * 
+ *
  * Richtung von -179 bis 180, 0 nach vorne - wird gequantelt
  * Geschw von -100 bis +100
  * dreh (von -100 bis + 100 , rechts rum positiv
- * 
+ *
  * kein delay im main Programm
  * -> bei warte scannt bot weiter
-*/
+ */
 
 #include <CAN.h>
 #include <Pixy2I2C.h>
@@ -16,7 +16,7 @@
 #include <elapsedMillis.h>
 Pixy2I2C pixy;
 
-//Farben der LEDs
+// Farben der LEDs
 #define OFF 0
 #define GREEN 1
 #define RED 2
@@ -56,7 +56,6 @@ Pixy2I2C pixy;
 #define ANGLE_8 1
 
 int compassInt;
-bool cam;
 int head;
 bool compassEna = false;
 
@@ -83,7 +82,6 @@ elapsedMillis waitTime;
 class BohleBots {
  public:
   BohleBots() {
-    cam = false;
     pinMode(kicker, OUTPUT);
     digitalWrite(kicker, LOW);
     Serial.begin(115200);
@@ -204,13 +202,13 @@ class BohleBots {
   }
 
   void drive(int direction, int speed, int rotate) {
-    //direction = direction / 45;
+    // direction = direction / 45;
     int maxs = abs(speed) + abs(rotate);
     if (maxs > 100) {
       speed = speed * 100 / maxs;
       rotate = rotate * 100 / maxs;
     }
-    //Serial.println("Richtung: "+String(richtung)+" geschw: "+String(geschw)+" Dreh: "+dreh);
+    // Serial.println("Richtung: "+String(richtung)+" geschw: "+String(geschw)+" Dreh: "+dreh);
     if (direction == 0)  // geradeaus
     {
       motor(1, -speed + rotate);
@@ -325,7 +323,7 @@ class BohleBots {
       return false;
     if (device > 7)
       return false;
-    //portena[device] = true;
+    // portena[device] = true;
     if (nr == 1)
       return button1Array[device];
     if (nr == 2)
@@ -362,7 +360,7 @@ class BohleBots {
     if (device > 7)
       return;
 
-    //portena[device] = true;
+    // portena[device] = true;
 
     if (nr == 1) {
       color = color * 2;
@@ -481,13 +479,13 @@ class BohleBots {
     int irpaket;
     CAN.beginPacket(0x03, 1, true);  // sendet RTR und will 1 byte
     if (CAN.endPacket() == 1) {
-      //Serial.println("done1 :"+String(time));
+      // Serial.println("done1 :"+String(time));
       while (!CAN.parsePacket()) {
         delayMicroseconds(1);
         time++;
       }
-      //Serial.println("done2 :"+String(time));
-      //Serial.println("echtzeit :"+String(echtzeit));
+      // Serial.println("done2 :"+String(time));
+      // Serial.println("echtzeit :"+String(echtzeit));
       while (CAN.available()) {
         irpaket = CAN.read();
         ballDirectionVar = (irpaket / 16) - 7;
@@ -500,7 +498,7 @@ class BohleBots {
           ballDirectionVar = 0;
       }
 
-      //Serial.println("done :"+String(time));
+      // Serial.println("done :"+String(time));
     } else
       Serial.println("IR antwortet nicht");
   }
@@ -514,7 +512,7 @@ class BohleBots {
       goalDirectionVar = -(pixy.ccc.blocks[0].m_x - 158) / 2;
       int tor_breite = pixy.ccc.blocks[0].m_width;
       int tor_hoehe = pixy.ccc.blocks[0].m_height;
-      //tor_entfernung_roh =  pixy.ccc.blocks[0].m_y-80;
+      // tor_entfernung_roh =  pixy.ccc.blocks[0].m_y-80;
       int tor_entfernung_roh = pixy.ccc.blocks[0].m_y;
       goalDistanceVar = (tor_entfernung_roh - tor_hoehe) / 4;  //-abs(tor_richtung)/10;
       if (goalDistanceVar < 0)
@@ -526,34 +524,17 @@ class BohleBots {
 
  public:
   void readPixy() {
-    //int i;
-    // grab blocks!
     pixy.ccc.getBlocks();
 
-    // If there are detect blocks, print them!
     if (pixy.ccc.numBlocks) {
-      //Serial.print("evaluate pixy");
       evaluatePixy();
-      //Serial.print("done evaluating");
-      cam = true;
     } else {
       goalDirectionVar = compass();
-      cam = false;
-      //Serial.print("else done");
     }
   }
 
  public:
-  boolean readLightSensor() {
-    //Serial.println("licht: " + String(analogRead(lightSensor)));
-    if (input(3) > 0)
-      return false;
-    else
-      return true;
-  }
-
- public:
-  boolean camBlind() {
-    return cam;
+  boolean hasBall() {
+    return input(3) > 0 ? false : true;
   }
 };

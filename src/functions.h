@@ -1,50 +1,74 @@
-#include <Arduino.h>
+/*
+  ausgelagerte Funktionen vom main programm
+*/
 
+#include <Arduino.h>
 #include "bohlebots.h"
 BohleBots bot;
 
-void startBot() {
-  bot.led(0, 1, WHITE);
-  bot.setze_kompass();
-  Serial.println("Kompass gesetzt");
+
+
+// lässt jede led in bestimmter farbe für 0.5s leuchten
+void led(string color) {
+  bot.led(0, 1, color);
+  bot.led(0, 2, color);
+  bot.led(7, 1, color);
+  bot.led(7, 2, color);
   bot.warte(500);
   bot.led(0, 1, OFF);
+  bot.led(0, 2, OFF);
+  bot.led(7, 1, OFF);
+  bot.led(7, 2, OFF);
 }
 
+void startBot() {
+  bot.setSoccer(true);
+  bot.setPixy(true);
+  bot.init();
+  bot.setze_kompass();
+  Serial.println("Kompass gesetzt");
+  led("GREEN");
+}
+
+// bot bleibt vor Tor stehen
+int speed(int s) {
+  return bot.goalDistance > 5 ? s : 0;
+}
+
+// passt rotationsgeschwindigkeit an winkel zum Tor an, damit bot nicht überdreht
 int rotate() {
-  int t = 0;
+  // TODO test ob bestimmte geschwindigkeit?
   if (bot.goalDirection() > 5) {
-    //TODO test ob bestimmte geschwindigkeit?
     if (bot.goalDirection() > 150)
-      t = -24;
+      return -24;
     else if (bot.goalDirection() > 115 && bot.goalDirection() < 150)
-      t = -21;
+      return -21;
     else if (bot.goalDirection() > 80 && bot.goalDirection() < 115)
-      t = -17;
+      return -17;
     else if (bot.goalDirection() > 50 && bot.goalDirection() < 80)
-      t = -14;
+      return -14;
     else if (bot.goalDirection() > 20 && bot.goalDirection() < 50)
-      t = -12;
+      return -12;
     else if (bot.goalDirection() > 3 && bot.goalDirection() < 20)
-      t = -10;
+      return -10;
   } else if (bot.goalDirection() < -5) {
     if (bot.goalDirection() < -150)
-      t = 24;
+      return 24;
     else if (bot.goalDirection() < -115 && bot.goalDirection() > -150)
-      t = 21;
+      return 21;
     else if (bot.goalDirection() < -80 && bot.goalDirection() > -115)
-      t = 17;
+      return 17;
     else if (bot.goalDirection() < -50 && bot.goalDirection() > -80)
-      t = 14;
+      return 14;
     else if (bot.goalDirection() < -20 && bot.goalDirection() > -50)
-      t = 12;
+      return 12;
     else if (bot.goalDirection() < -3 && bot.goalDirection() > -20)
-      t = 10;
+      return 10;
   }
-  return t;
+  return 0;
 }
 
-//TODO individuelle rotationsgeschwindigkeit
+// TODO individuelle rotationsgeschwindigkeit
 int turnToBall() {
   int rotationSpeed = 0;
 
@@ -67,23 +91,15 @@ int turnToBall() {
   return rotationSpeed;
 }
 
+// bot geht auf standby
 void stopBot() {
-  bot.led(0, 1, WHITE);
-  bot.led(0, 2, WHITE);
-  bot.led(7, 1, WHITE);
-  bot.led(7, 2, WHITE);
   bot.drive(0, 0, 0);
-  bot.warte(500);
-  bot.led(0, 1, OFF);
-  bot.led(0, 2, OFF);
-  bot.led(7, 1, OFF);
-  bot.led(7, 2, OFF);
+  led("RED");
 }
 
+// bot fährt 2 richungen weiter als Ball bis er frontal zum Ball ist
 int directionBehindBall() {
-  // bot fährt 2 richungen weiter als Ball bis er frontal zum Ball ist
-
-  if (bot.ballDirection() < 0) {
+    if (bot.ballDirection() < 0) {
     if (bot.ballDirection() == -6)
       return 8;
     else if (bot.ballDirection() == -7)
@@ -100,6 +116,6 @@ int directionBehindBall() {
     else
       return bot.ballDirection() + 2;
   }
-  
+
   return 0;
 }
