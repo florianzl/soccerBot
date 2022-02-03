@@ -8,7 +8,7 @@
 BohleBots bot;
 
 // lässt jede led in bestimmter farbe für 0.5s leuchten
-void led(string color) {
+void led(int color) {
   bot.led(0, 1, color);
   bot.led(0, 2, color);
   bot.led(7, 1, color);
@@ -26,23 +26,23 @@ void startBot() {
   bot.init();
   bot.setze_kompass();
   Serial.println("Kompass gesetzt");
-  led("GREEN");
+  led(GREEN);
 }
 
 //bot beschleunigt und kickt
 int shoot() {
   // Zahl muss rausgefunden werden
-  if (bot.goalDistance < 10) {
+  if (bot.goalDistance() < 10) {
     bot.kick(30);
-    bot.fahre(0,0,0);
+    bot.drive(0,0,0);
   }
   else 
-    bot.fahre(0,100,0);
+    bot.drive(0,100,0);
 }
 
 // bot bleibt vor Tor stehen
 int speed(int s) {
-  return bot.goalDistance > 5 ? s : 0;
+  return bot.goalDistance() > 5 ? s : 0;
 }
 
 // passt rotationsgeschwindigkeit an winkel zum Tor an, damit bot nicht überdreht
@@ -104,7 +104,7 @@ int turnToBall() {
 // bot geht auf standby
 void stopBot() {
   bot.drive(0, 0, 0);
-  led("RED");
+  led(RED);
 }
 
 // bot fährt 2 richungen weiter als Ball bis er frontal zum Ball ist
