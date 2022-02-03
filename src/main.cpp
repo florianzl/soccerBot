@@ -18,6 +18,7 @@ void loop() {
 
   if (bot.button(0, 1)) {
     // kicker test
+    bot.kick(30)
   }
 
   else if (bot.button(0, 2))
@@ -35,7 +36,10 @@ void loop() {
   if (modus == 1) {
     if (bot.ball() > 0) {
       if (bot.hasBall()) {
-        // TODO kicker
+        if (bot.goalDirection() < 3 && bot.goalDirection() > -3) {
+          shoot();
+        }
+
         bot.drive(0, 30, rotate());
       } else {
         if (bot.ballDirection() < 3 && bot.ballDirection() > -3)
@@ -50,6 +54,11 @@ void loop() {
   else if (modus == 2) {
     if (bot.ball()) {
       if (bot.hasball()) {
+        if (bot.goalDirection() < 3 && bot.goalDirection() > -3) {
+          shoot();
+        }
+
+        bot.drive(0, 30, rotate());
       } else {
         bot.drive(directionBehindBall / 2, 30, rotate());
       }
