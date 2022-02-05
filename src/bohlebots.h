@@ -534,6 +534,9 @@ class BohleBots {
 
  public:
   boolean hasBall() {
-    return input(3) > 0 ? false : true;
+    if (input(3) > 0) {
+      return false;
+    }
+    else return true;
   }
 };
