@@ -103,7 +103,7 @@ void stopBot() {
 // bot fährt 2 richungen weiter als Ball bis er frontal zum Ball ist
 int directionBehindBall() {
   if (bot.ballDirection() < 0) {
-    speed = 55;
+    speed = 45;
     if (bot.ballDirection() == -1)
       return -2;
     else if (bot.ballDirection() == -2)
@@ -115,19 +115,22 @@ int directionBehindBall() {
     else if (bot.ballDirection() == -4)
       return -6;
 
-    else if (bot.ballDirection() == -5)
+    else if (bot.ballDirection() == -5){
       return -7;
+    }
 
-    else if (bot.ballDirection() == -6)
+    else if (bot.ballDirection() == -6){
       return 8;
+    }
 
-    else if (bot.ballDirection() == -7)
+    else if (bot.ballDirection() == -7){
       return 7;
+    }
 
   }
 
   else if (bot.ballDirection() > 0) {
-    speed = 55;
+    speed = 45;
     if (bot.ballDirection() == 1)
       return 2;
 
@@ -140,24 +143,27 @@ int directionBehindBall() {
     else if (bot.ballDirection() == 4)
       return 6;
 
-    else if (bot.ballDirection() == 5)
+    else if (bot.ballDirection() == 5){
       return 7;
+    }
 
-    else if (bot.ballDirection() == 6)
+    else if (bot.ballDirection() == 6){
       return 8;
+    }
 
-    else if (bot.ballDirection() == 7)
+    else if (bot.ballDirection() == 7) {
       return -7;
+      }
 
     else if (bot.ballDirection() == 8)
       return -6;
   }
   
   if (bot.goalDirection() < 3 && bot.goalDirection() > -3) {
-    speed = 80;
+    speed = 75;
     return 0;
   }
 
   return 0;
-  speed = 70;
+  speed = 65;
 }

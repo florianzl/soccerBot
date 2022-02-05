@@ -21,6 +21,7 @@ void loop() {
     // kicker test
     bot.setze_kompass();
     Serial.println("Kompass gesetzt");
+    bot.warte(100);
   }
 
   else if (bot.button(0, 2))
