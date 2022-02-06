@@ -536,7 +536,7 @@ class BohleBots {
   boolean hasBall() {
     if (input(3) > 0) {
       return false;
-    }
-    else return true;
+    } else
+      return true;
   }
 };
