@@ -78,6 +78,7 @@ int led2Array[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 elapsedMillis deathTime;
 elapsedMillis waitTime;
+bool pixyBlind;
 
 class BohleBots {
  public:
@@ -131,6 +132,7 @@ class BohleBots {
     digitalWrite(DRIVE_DIS, HIGH);
     delay(100);
     deathTime = 1000;
+    pixyBlind = false;
     for (int i = 0; i < 8; i++) {
       Wire.beginTransmission(buttonLedId[i]);
       byte error = Wire.endTransmission();
@@ -145,11 +147,10 @@ class BohleBots {
     delay(100);
     Wire.beginTransmission(compassAddress);
     byte error = Wire.endTransmission();
-    if (error == 0)
+    if (error == 0) {
       compassEna = true;
-    if (error == 0)
       Serial.println("Kompass true");
-    else
+    } else
       Serial.println("Kompass false");
 
     delay(100);
@@ -306,6 +307,7 @@ class BohleBots {
   }
 
   int compass() {
+    Serial.println("compass: " + compassInt);
     return compassInt;
   }
 
@@ -386,11 +388,11 @@ class BohleBots {
   }
 
   void strike() {
-    for (int i = 40; i < 100; i = i + 3) {
-      drive(0, i, 0);
+    for (int i = 50; i < 100; i = i + 3) {
+      drive(0, i, goalDirection() / 5);
       delay(1);
     }
-    drive(0, 100, 0);
+    drive(0, 100, goalDirection() / 5);
     delay(20);
     kick(40);
     drive(0, -100, 0);
@@ -417,6 +419,7 @@ class BohleBots {
   }
 
   int kompass_org() {
+    Serial.println("kompass_org begin");
     unsigned char high_byte, low_byte, angle8;
     unsigned int angle16;
     Wire.beginTransmission(compassAddress);
@@ -432,9 +435,11 @@ class BohleBots {
     angle16 <<= 8;
     angle16 += low_byte;
     return angle16 / 10;
+    Serial.println("kompass_org end");
   }
 
   int kompass_lesen() {
+    Serial.println("kompass lesen");
     return ((((kompass_org() - head) + 180 + 360) % 360) - 180);
   }
 
@@ -527,8 +532,10 @@ class BohleBots {
 
     if (pixy.ccc.numBlocks) {
       evaluatePixy();
+      pixyBlind = false;
     } else {
       goalDirectionVar = compass();
+      pixyBlind = true;
     }
   }
 
