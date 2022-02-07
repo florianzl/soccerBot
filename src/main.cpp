@@ -3,18 +3,11 @@
  */
 
 #include <Arduino.h>
-
 #include "functions.h"
+//#include "my_eprom.h"
 
-int modus;
-bool start;
 
-void setup() {
-  modus = 0;
-  speed = 70;
-  startBot();
-  start = true;
-}
+
 
 void loop() {
   bot.warte(5);
@@ -26,17 +19,22 @@ void loop() {
     bot.warte(100);
   }
 
-  else if (bot.button(0, 2))
-    modus = 1;
+  else if (bot.button(0, 2)) {
+    modus = 10;
+    //writeEEPROM();
+  }
+    
 
   else if (bot.button(7, 1)) {
     modus = 2;
     start = true;
+    //writeEEPROM();
   }
 
   else if (bot.button(7, 2)) {
     stopBot();
     modus = 0;
+    //writeEEPROM();
   }
 
   // wenn ball mind. richtung 3 ist fährt bot hinter ball, sonst zum ball
@@ -56,7 +54,7 @@ void loop() {
       } else {
         bot.drive(directionBehindBall() / 2, speed, bot.goalDirection() / -5);
       }
-    } else
+    } else 
       bot.drive(0, 0, 0);
 
   }
@@ -66,6 +64,7 @@ void loop() {
     // bot.drive(0, speed(30), rotate());
     // bot.drive(0,30,bot.goalDirection() / -5);
     // Serial.println("richtung: " + String(bot.ballDirection()) + " fahre " + String(directionBehindBall()));
-    bot.drive(0, 30, 0);
+    //led(WHITE);
+    Serial.println(bot.input(3));
   }
 }
