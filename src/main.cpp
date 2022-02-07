@@ -54,6 +54,10 @@ void loop() {
         bot.warte(1000);
         start = false;
       } else {
+        if(bot.pixyBlind && bot.goalDirection() < 5 && bot.goalDirection() > -5) {
+
+          
+        }
         bot.drive(directionBehindBall() / 2, speed, bot.goalDirection() / -5);
       }
     } else
