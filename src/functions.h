@@ -4,14 +4,9 @@
 
 #include <Arduino.h>
 
-#include "bohlebots.h"
-BohleBots bot;
-extern int speed = 80;
-extern int modus = 0;
-extern bool start;
-#define EEPROM_SIZE 64
-byte eprombyte[4] = {0,0,0,0};
-#include "my_eprom.h"
+#include "header.h"
+
+
 
 // lässt jede led in bestimmter farbe für 0.5s leuchten
 void led(int color) {
@@ -27,23 +22,12 @@ void led(int color) {
 }
 
 void startBot() {
-  bot.setSoccer(true);
-  bot.setPixy(true);
+  soccer = true;
+  pixy = true;
+  bot_init()
   bot.init();
   led(GREEN);
 }
-
-void setup() {
-  modus = 0;
-  speed = 70;
-  startBot();
-  start = true;
-  eprom_init();
-}
-
-
-
-
 
 
 // bot beschleunigt und kickt
@@ -190,4 +174,4 @@ int directionBehindBall() {
 
   return 0;
   speed = 65;
-}
+}#

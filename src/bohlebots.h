@@ -22,8 +22,6 @@ Pixy2I2C pixy;
 #define RED 2
 #define YELLOW 3
 #define BLUE 4
-#define CYAN 5
-#define MAGENTA 6
 #define WHITE 7
 
 #define SDA 21
@@ -55,33 +53,28 @@ Pixy2I2C pixy;
 #define compassAddress 0x60  // cmps11, cmps12, cmps14
 #define ANGLE_8 1
 
-int compassInt;
-int head;
-bool compassEna = false;
-
-int ballDirectionVar = 0;
-int ballMax = 0;
-
-int goalDirectionVar = 0;
-int goalDistanceVar = 0;
-
-boolean soccer = false;
-boolean hasPixy = false;
-
-bool portena[] = {false, false, false, false, false, false, false, false};
-int buttonLedId[] = {0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27};
-bool button1Array[] = {false, false, false, false, false, false, false, false};
-bool button2Array[] = {false, false, false, false, false, false, false, false};
-
-int led1Array[] = {0, 0, 0, 0, 0, 0, 0, 0};
-int led2Array[] = {0, 0, 0, 0, 0, 0, 0, 0};
-
 elapsedMillis deathTime;
 elapsedMillis waitTime;
-bool pixyBlind;
 
 class BohleBots {
- public:
+ private: int compass, compassHead;
+ private: bool compassEnabled;
+
+ private: int ballDirection;
+ private: bool ballSeen;
+
+ private: int goalDirection, goalDistance;
+
+ private: bool portEnabled[] = {false, false, false, false, false, false, false, false};
+ private: bool button1Array[] = {false, false, false, false, false, false, false, false};
+ private: bool button2Array[] = {false, false, false, false, false, false, false, false};
+ private: int buttonLedId[] = {0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27};
+
+ private: int led1Array[] = {0, 0, 0, 0, 0, 0, 0, 0};
+ private: int led2Array[] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+ private: bool soccer, haspixy, pixyBlind;
+
   BohleBots() {
     pinMode(kicker, OUTPUT);
     digitalWrite(kicker, LOW);
@@ -121,8 +114,7 @@ class BohleBots {
     delay(100);
     if (!CAN.begin(500E3)) {
       Serial.print("...failed!");
-      while (1)
-        ;
+      while (1) ;
     }  // start the CAN bus at 500 kbps
     else
       Serial.println("...succeed");
@@ -137,25 +129,28 @@ class BohleBots {
       Wire.beginTransmission(buttonLedId[i]);
       byte error = Wire.endTransmission();
       if (error == 0)
-        portena[i] = true;
-      Serial.print("LED_Tast : " + String(i) + " : ");
+        portEnabled[i] = true;
+      Serial.print("Button : " + String(i) + " : ");
       if (error == 0)
         Serial.println("true");
       else
         Serial.println("false");
     }
+
     delay(100);
     Wire.beginTransmission(compassAddress);
     byte error = Wire.endTransmission();
     if (error == 0) {
-      compassEna = true;
-      Serial.println("Kompass true");
-    } else
-      Serial.println("Kompass false");
+      compassEnabled = true;
+      Serial.println("Compass true");
+    } else {
+      compassEnabled = false;
+      Serial.println("Compass false");
+    }
 
     delay(100);
     if (hasPixy) {
-      Serial.print("Warte auf Pixy2 auf i2c 0x54...");
+      Serial.print("Wait for Pixy2 on i2c 0x54...");
       pixy.init(0x54);
       Serial.println("done");
     }
@@ -306,16 +301,15 @@ class BohleBots {
     return 0;
   }
 
-  int compass() {
-    Serial.println("compass: " + compassInt);
-    return compassInt;
+  int getCompass() {
+    return compass;
   }
 
-  void setze_kompass() {
+  void setCompass() {
     Wire.beginTransmission(compassAddress);
     byte error = Wire.endTransmission();
     if (error == 0) {
-      head = kompass_org();
+      compassHead = CompassOrg();
     }
   }
 
@@ -325,7 +319,7 @@ class BohleBots {
       return false;
     if (device > 7)
       return false;
-    // portena[device] = true;
+    // portEnabled[device] = true;
     if (nr == 1)
       return button1Array[device];
     if (nr == 2)
@@ -333,23 +327,30 @@ class BohleBots {
     return false;
   }
 
-  int ballDirection() {
-    return ballDirectionVar;
+  int getBallDirection() {
+    return ballDirection;
   }
 
   int ball() {
-    if (ballMax > 0)
+    if (ballSeen)
       return true;
     return false;
   }
 
-  int goalDirection() {
-    readPixy();
-    return goalDirectionVar;
+  bool hasBall() {
+    if (input(3) > 0) {
+      return false;
+    } else
+      return true;
   }
 
-  int goalDistance() {
-    return goalDistanceVar;
+  int getGoalDirection() {
+    readPixy();
+    return goalDirection;
+  }
+
+  int getGoalDistance() {
+    return goalDirection;
   }
 
   void led(int device, int nr, int color) {
@@ -362,7 +363,7 @@ class BohleBots {
     if (device > 7)
       return;
 
-    // portena[device] = true;
+    // portEnabled[device] = true;
 
     if (nr == 1) {
       color = color * 2;
@@ -389,10 +390,10 @@ class BohleBots {
 
   void strike() {
     for (int i = 50; i < 100; i = i + 3) {
-      drive(0, i, goalDirection() / 5);
+      drive(0, i, getGoalDirection() / 5);
       delay(1);
     }
-    drive(0, 100, goalDirection() / 5);
+    drive(0, 100, getGoalDirection() / 5);
     delay(20);
     kick(40);
     drive(0, -100, 0);
@@ -418,8 +419,7 @@ class BohleBots {
     return ((speed * 255) / 100);
   }
 
-  int kompass_org() {
-    Serial.println("kompass_org begin");
+  int compassOrg() {
     unsigned char high_byte, low_byte, angle8;
     unsigned int angle16;
     Wire.beginTransmission(compassAddress);
@@ -435,21 +435,19 @@ class BohleBots {
     angle16 <<= 8;
     angle16 += low_byte;
     return angle16 / 10;
-    Serial.println("kompass_org end");
   }
 
-  int kompass_lesen() {
-    Serial.println("kompass lesen");
-    return ((((kompass_org() - head) + 180 + 360) % 360) - 180);
+  int readCompass() {
+    return ((((compassOrg() - compassHead) + 180 + 360) % 360) - 180);
   }
 
-  void set_heading() {
-    head = kompass_org();
+  void setCompassHeading() {
+    compassHead = compassOrg();
   }
 
   void i2csync() {
     for (int i = 0; i < 8; i++) {
-      if (portena[i]) {
+      if (portEnabled[i]) {
         int ledwert = 255 - led1Array[i] - led2Array[i];
         Wire.beginTransmission(buttonLedId[i]);
         Wire.write(ledwert);
@@ -472,8 +470,8 @@ class BohleBots {
         }
       }
     }  // ENDE TastLED
-    if (compassEna == true) {
-      compassInt = kompass_lesen();
+    if (compassEnabled == true) {
+      compass = readCompass();
     }
   }
 
@@ -493,14 +491,14 @@ class BohleBots {
       // Serial.println("echtzeit :"+String(echtzeit));
       while (CAN.available()) {
         irpaket = CAN.read();
-        ballDirectionVar = (irpaket / 16) - 7;
+        ballDirection = (irpaket / 16) - 7;
         int zone = irpaket % 16;
         if (zone < 1) {
-          ballMax = 0;
+          ballSeen = false;
         } else
-          ballMax = 1;
-        if (ballMax < 1)
-          ballDirectionVar = 0;
+          ballSeen = true;
+        if (!ballSeen)
+          ballDirection = 0;
       }
 
       // Serial.println("done :"+String(time));
@@ -514,19 +512,18 @@ class BohleBots {
     int pixyBlocks = pixy.ccc.blocks[0].m_signature;
 
     if (pixyBlocks == goal) {
-      goalDirectionVar = -(pixy.ccc.blocks[0].m_x - 158) / 2;
+      goalDirection = -(pixy.ccc.blocks[0].m_x - 158) / 2;
       int goalWidth = pixy.ccc.blocks[0].m_width;
       int goalHeight = pixy.ccc.blocks[0].m_height;
       int goalDistanceRaw = pixy.ccc.blocks[0].m_y;
-      goalDistanceVar = (goalDistanceRaw - goalHeight) / 4;  //-abs(tor_richtung)/10;
-      if (goalDistanceVar < 0)
-        goalDistanceVar = 0;
-      if (goalDistanceVar > 63)
-        goalDistanceVar = 63;
+      goalDistance = (goalDistanceRaw - goalHeight) / 4;  //-abs(tor_richtung)/10;
+      if (goalDistance < 0)
+        goalDistance = 0;
+      if (goalDistance > 63)
+        goalDistance = 63;
     }
   }
 
- public:
   void readPixy() {
     pixy.ccc.getBlocks();
 
@@ -534,16 +531,20 @@ class BohleBots {
       evaluatePixy();
       pixyBlind = false;
     } else {
-      goalDirectionVar = compass();
+      goalDirection = getCompass();
       pixyBlind = true;
     }
   }
 
- public:
-  boolean hasBall() {
-    if (input(3) > 0) {
-      return false;
-    } else
-      return true;
+  bool getPixyBlind() {
+    return pixyBlind;
   }
+
+  
+
+  int getInput(int port) {
+    return input(port);
+  }
+
+  
 };
