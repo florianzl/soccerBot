@@ -1,14 +1,18 @@
+
+#include <header.h>
+Bot bot;
+
+void setup() {
+  bot.setupBot();
+  modus = 0;
+  start = true;
+}
+
+void loop() {
+  //NOTHING
+}
+
 /*
- * OHNE KICKER
- */
-
-#include <Arduino.h>
-#include "functions.h"
-//#include "my_eprom.h"
-
-
-
-
 void loop() {
   bot.warte(5);
 
@@ -72,3 +76,4 @@ void loop() {
     Serial.println(bot.input(3));
   }
 }
+*/
