@@ -1,47 +1,83 @@
-
+#include <Arduino.h>
 #include <header.h>
+
 Bot bot;
+bool start;
 
 void setup() {
-  bot.setupBot();
-  modus = 0;
+  bot.setupBot(true, true);
   start = true;
 }
 
+void play(bool s) {
+  bool hasKickoff = s;
+
+  if (bot.ballVisible()) {
+    bot.led(0, 2, OFF);
+
+    if (hasKickoff) {
+      // nur effektiv wenn bot seitlich gestellt wird, damit er eine kurve um den gegner macht
+      bot.drive(bot.directionBehindBall(), 75, bot.getGoalDirection() / -5);
+      bot.wait(1000);
+      hasKickoff = false;
+    }
+    // bot hat am anfang nicht den Ball
+    else {
+      if (bot.isInCorner()) {
+        bot.getOutOfCorner();
+      } else {
+        if (bot.hasBall()) {
+          // abfrage ob bot in optimaler entfernung mit ball aufs tor schaut um zu schießen
+          if (bot.getGoalDirection() < 3 && bot.getGoalDirection() > -3 && bot.getGoalDistance < 20) {
+            bot.strike();
+          } else {
+            // bot hat ball, guckt aber nicht direkt zum tor oder ist weit weg
+          }
+        } else {
+          bot.drive(directionBehindBall(), bot.getSpeed(), bot.getGoalDirection() / -5);
+        }
+      }
+    }
+  } else {
+    bot.led(0, 2, RED);
+    bot.drive(0, 0, 0);
+  }
+}
+
+void preparationMode() {
+  if (bot.button(0, 2))
+    bot.kick(30);
+  else if (bot.button(7, 1))
+    bot.setCompass();
+}
+
+void gameMode() {
+  if (bot.button(0, 2))
+    bot.pauseBot();
+  else if (bot.button(7, 1))
+    play(false);
+  else if (bot.button(7, 2))
+    play(true);
+}
+
 void loop() {
-  //NOTHING
+  bot.wait(5);
+  if (bot.button(0, 1)) bot.changeMode();
+
+  switch (bot.getMode()) {
+    case 0:
+      preparationMode();
+      bot.led(0, 1, YELLOW);
+      return;
+    case 1:
+      gameMode();
+      bot.led(0, 1, GREEN);
+      return;
+  }
 }
 
 /*
 void loop() {
-  bot.warte(5);
-
-  if (bot.button(0, 1)) {
-    // kicker test
-    bot.setze_kompass();
-    Serial.println("Kompass gesetzt");
-    bot.warte(100);
-  }
-
-  else if (bot.button(0, 2)) {
-    modus = 10;
-    //writeEEPROM();
-  }
-    
-
-  else if (bot.button(7, 1)) {
-    modus = 2;
-    start = true;
-    //writeEEPROM();
-  }
-
-  else if (bot.button(7, 2)) {
-    stopBot();
-    modus = 0;
-    //writeEEPROM();
-  }
-
-  // wenn ball mind. richtung 3 ist fährt bot hinter ball, sonst zum ball
   if (modus == 1) {
     if (bot.ball()) {
       bot.drive(directionBehindBall() / 2, speed, bot.goalDirection() / -5);
@@ -58,11 +94,11 @@ void loop() {
       } else {
         if(bot.pixyBlind && bot.goalDirection() < 5 && bot.goalDirection() > -5) {
 
-          
+
         }
         bot.drive(directionBehindBall() / 2, speed, bot.goalDirection() / -5);
       }
-    } else 
+    } else
       bot.drive(0, 0, 0);
 
   }

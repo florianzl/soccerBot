@@ -1,8 +1,7 @@
 /*
-  ausgelagerte Funktionen vom main programm
+  directionBehindBall funktion zur sicherheit aufbewahrt.
+  wird beim nächsten erfolgreichem testen des Bots gelöscht
 */
-
-#include <Arduino.h>
 
 // bot fährt 2 richungen weiter als Ball bis er frontal zum Ball ist
 /*int directionBehindBall() {

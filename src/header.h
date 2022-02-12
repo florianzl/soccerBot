@@ -6,7 +6,7 @@
  * kein delay im main Programm
  * -> bei warte scannt bot weiter
  */
-
+#include <Arduino.h>
 #include <CAN.h>
 #include <Pixy2I2C.h>
 #include <Wire.h>
@@ -52,54 +52,41 @@ Pixy2I2C pixy;
 #define ANGLE_8 1
 #define EPROM_SIZE 64
 
+#define right 1
+#define left 0
+#define frontal -1
+
 elapsedMillis deathTime;
 elapsedMillis waitTime;
 
 class Bot {
  private:
   byte epromByte[4] = {0, 0, 0, 0};
- private:
-  int speed;
+ 
+  int speed, mode;
 
- private:
-  int compass, compassHead;
-
- private:
+  int compass, compassHead, lastCompassOutput;
   bool compassEnabled;
 
- private:
   int ballDirection;
+  bool ballVisibility;
 
- private:
-  bool ballSeen;
-
- private:
+ 
   int goalDirection, goalDistance;
 
- private:
-  bool portEnabled[] = {false, false, false, false, false, false, false, false};
+ 
+  bool portEnabled[8] = {false, false, false, false, false, false, false, false};
+  bool button1Array[8] = {false, false, false, false, false, false, false, false};
+  bool button2Array[8] = {false, false, false, false, false, false, false, false};
+  int buttonLedId[8] = {0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27};
 
- private:
-  bool button1Array[] = {false, false, false, false, false, false, false, false};
+ 
+  int led1Array[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  int led2Array[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
- private:
-  bool button2Array[] = {false, false, false, false, false, false, false, false};
-
- private:
-  int buttonLedId[] = {0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27};
-
- private:
-  int led1Array[] = {0, 0, 0, 0, 0, 0, 0, 0};
-
- private:
-  int led2Array[] = {0, 0, 0, 0, 0, 0, 0, 0};
-
- private:
   bool soccer, hasPixy, pixyBlind;
 
- private:
-  int lastCompassOutput;
-
+ public:
   Bot() {
     pinMode(kicker, OUTPUT);
     digitalWrite(kicker, LOW);
@@ -181,19 +168,37 @@ class Bot {
       Serial.println("done");
     }
   }
-
+  
+ public:
   void setupBot(bool pixy, bool soccer) {
     init();
     epromInit();
-    this.hasPixy = pixy;
-    this.soccer = soccer;
+    this->hasPixy = pixy;
+    this->soccer = soccer;
+    this->mode = 0;
     blinkAll(GREEN);
+  }
+
+  void pauseBot() {
+    drive(0, 0, 0);
+    blinkAll(RED);
+  }
+
+  void changeMode() {
+    switch(mode){
+      case 0: mode = 1; return;
+      case 1: mode = 0; return;
+    }
+  }
+
+  bool getMode() {
+    return this->mode;
   }
 
  private:
   void epromInit() {
     int x = 0; //platzhalter variable
-    readEEPROM();
+    readEprom();
     compassHead = epromByte[1] * 265 + epromByte[2];  //  hightbyte,lowbyte
     if (epromByte[0] == x) {
       //NOTHING
@@ -209,27 +214,23 @@ class Bot {
     }
   }
 
+ public:
   void readEprom() {
     for (int i = 0; i < 4; i++) {
       epromByte[i] = (byte(EEPROM.read(i)));
     }
   }
-
+ 
   void writeEprom() {
-    epromByte[0] = modus;
-    epromByte[1] = head / 256;  // highbyte
-    epromByte[2] = head % 256;  // lowbyte
-    epromByte[3] = start;
+    //epromByte[0] = ;
+    epromByte[1] = compassHead / 256;  // highbyte
+    epromByte[2] = compassHead % 256;  // lowbyte
+    //epromByte[3] = ;
 
     for (int i = 0; i < 4; i++) {
       EEPROM.write(i, epromByte[i]);
     }
     EEPROM.commit();
-  }
-
-  void pauseBot() {
-    drive(0, 0, 0);
-    blinkAll(Red);
   }
 
   void wait(int time) {
@@ -248,7 +249,7 @@ class Bot {
   }
 
   
-  private:
+ private:
   void motor(int number, int speed) {
     // Speed wird bei 100 und -100 gekappt
     if (speed > 100)
@@ -280,73 +281,79 @@ class Bot {
    speed     -100 bis 100,
    rotate    -100 bis 100, rechts positiv
    */
+ public:
   void drive(int direction, int speed, int rotate) {
+    direction = direction / 2;
     int maxs = abs(speed) + abs(rotate);
     if (maxs > 100) {
       speed = speed * 100 / maxs;
       rotate = rotate * 100 / maxs;
     }
-    // geradeaus
-    if (direction == 0) {
-      motor(1, -speed + rotate);
-      motor(2, -speed + rotate);
-      motor(3, speed + rotate);
-      motor(4, speed + rotate);
-    }
 
-    // 45 Grad rechts
-    if (direction == 1) {
-      motor(1, +rotate);
-      motor(2, -speed + rotate);
-      motor(3, +rotate);
-      motor(4, speed + rotate);
-    }
+    switch(direction) {
+      //geradeaus
+      case 0:
+        motor(1, -speed + rotate);
+        motor(2, -speed + rotate);
+        motor(3, speed + rotate);
+        motor(4, speed + rotate);
+        return;
 
-    // rechts
-    if (direction == 2) {
-      motor(1, speed + rotate);
-      motor(2, -speed + rotate);
-      motor(3, -speed + rotate);
-      motor(4, speed + rotate);
-    }
+      // 45 Grad rechts
+      case 1:
+        motor(1, rotate);
+        motor(2, -speed + rotate);
+        motor(3, rotate);
+        motor(4, speed + rotate);
+        return;
 
-    // 135 Grad rechts
-    if (direction == 3) {
-      motor(1, speed + rotate);
-      motor(2, +rotate);
-      motor(3, -speed + rotate);
-      motor(4, +rotate);
-    }
-    // zurück
-    if (direction == 4) {
-      motor(1, speed + rotate);
-      motor(2, speed + rotate);
-      motor(3, -speed + rotate);
-      motor(4, -speed + rotate);
-    }
+      // 45 Grad links
+      case -1:
+        motor(1, -speed + rotate);
+        motor(3, speed + rotate);
+        motor(4, rotate);
+        motor(2, rotate);
+        return;
 
-    // 135 Grad links
-    if (direction == -3) {
-      motor(1, +rotate);
-      motor(2, speed + rotate);
-      motor(3, +rotate);
-      motor(4, -speed + rotate);
-    }
+      // rechts
+      case 2:
+        motor(1, speed + rotate);
+        motor(2, -speed + rotate);
+        motor(3, -speed + rotate);
+        motor(4, speed + rotate);
+        return;
 
-    // links
-    if (direction == -2) {
-      motor(1, -speed + rotate);
-      motor(2, speed + rotate);
-      motor(3, speed + rotate);
-      motor(4, -speed + rotate);
-    }
+      // links
+      case -2:
+        motor(1, -speed + rotate);
+        motor(2, speed + rotate);
+        motor(3, speed + rotate);
+        motor(4, -speed + rotate);
+        return;
 
-    // 45 Grad links
-    if (direction == -1) {
-      motor(1, -speed + rotate);
-      motor(2, +rotate);
-      motor(3, speed + rotate);
-      motor(4, +rotate);
+      // 135 Grad rechts
+      case 3:
+        motor(1, speed + rotate);
+        motor(2, rotate);
+        motor(3, -speed + rotate);
+        motor(4, rotate);
+        return;
+
+      // 135 Grad links
+      case -3:
+        motor(1, rotate);
+        motor(2, speed + rotate);
+        motor(3, rotate);
+        motor(4, -speed + rotate);
+        return;
+
+      // zurück
+      case 4:
+        motor(1, speed + rotate);
+        motor(2, speed + rotate);
+        motor(3, -speed + rotate);
+        motor(4, -speed + rotate);
+        return;
     }
   }
 
@@ -399,28 +406,7 @@ class Bot {
     }
   }
 
-  void getOutOfCorner() {
-    switch (siteOfBot()) {
-      case "right":
-        // bot ist in der rechten ecke
-        if (hasBall()) {
-          drive(0, 40, -10);
-        } else {
-          drive(-3, 70, 0);
-        }
-      case "left":
-        // bot ist in der linken ecke
-        if (hasBall()) {
-          drive(0, 40, 10);
-        } else {
-          drive(3, 70, 0);
-        }
-      default:
-        Serial.println("bot faces the goal head on")
-    }
-  }
-
- private:
+private:
   void servo(int pos) {
     if (pos > 100)
       pos = 100;
@@ -428,7 +414,36 @@ class Bot {
       pos = -100;
     ledcWrite(6, 5000 + pos * 30);
   }
+  
+  int siteOfBot() {
+    if (lastCompassOutput != 0)
+      return lastCompassOutput < 0 ? right : left;
+    else
+      return frontal;
+  }
 
+ public:
+  void getOutOfCorner() {
+    switch (siteOfBot()) {
+      case right:
+        // bot ist in der rechten ecke
+        if (hasBall()) {
+          drive(0, 40, -10);
+        } else {
+          drive(-3, 70, 0);
+        }
+      case left:
+        // bot ist in der linken ecke
+        if (hasBall()) {
+          drive(0, 40, 10);
+        } else {
+          drive(3, 70, 0);
+        }
+      default:
+        Serial.println("bot faces the goal head on");
+    }
+  }
+  
   int input(int number) {
     if (number == 1)
       return (analogRead(INPUT1));
@@ -441,8 +456,8 @@ class Bot {
     return 0;
   }
 
-  bool button(int device, int nr)  // liefert von device Taster nr (1:links, 2:rechts)
-  {
+  // liefert von device Taster nr (1:links, 2:rechts)
+  bool button(int device, int nr) {
     if (device < 0)
       return false;
     if (device > 7)
@@ -454,13 +469,13 @@ class Bot {
       return button2Array[device];
     return false;
   }
-
+ 
   int getBallDirection() {
     return ballDirection;
   }
 
-  int ball() {
-    if (ballSeen)
+  int ballVisible() {
+    if (ballVisibility)
       return true;
     return false;
   }
@@ -479,6 +494,10 @@ class Bot {
 
   int getGoalDistance() {
     return goalDirection;
+  }
+
+  int getSpeed() {
+    return speed;
   }
 
   void led(int device, int nr, int color) {
@@ -505,15 +524,15 @@ class Bot {
 
   // lässt jede led in bestimmter farbe für 0.5s leuchten
   void blinkAll(int color) {
-    bot.led(0, 1, color);
-    bot.led(0, 2, color);
-    bot.led(7, 1, color);
-    bot.led(7, 2, color);
-    bot.warte(200);
-    bot.led(0, 1, OFF);
-    bot.led(0, 2, OFF);
-    bot.led(7, 1, OFF);
-    bot.led(7, 2, OFF);
+    led(0, 1, color);
+    led(0, 2, color);
+    led(7, 1, color);
+    led(7, 2, color);
+    wait(100);
+    led(0, 1, OFF);
+    led(0, 2, OFF);
+    led(7, 1, OFF);
+    led(7, 2, OFF);
   }
 
   void kick(int time) {
@@ -552,13 +571,13 @@ class Bot {
       return (analogRead(INPUT4) < 2048);
   }
 
- private:
   int spdToPWM(int speed) {
     if (speed < 0)
       speed *= -1;
     return ((speed * 255) / 100);
   }
 
+ public:
   int getCompass() {
     return compass;
   }
@@ -567,7 +586,7 @@ class Bot {
     Wire.beginTransmission(compassAddress);
     byte error = Wire.endTransmission();
     if (error == 0) {
-      compassHead = CompassOrg();
+      compassHead = compassOrg();
     }
   }
 
@@ -598,7 +617,6 @@ class Bot {
     compassHead = compassOrg();
   }
 
- private:
   void i2cSync() {
     for (int i = 0; i < 8; i++) {
       if (portEnabled[i]) {
@@ -630,7 +648,6 @@ class Bot {
       Serial.println("Compass disabled");
   }
 
- private:
   void Can() {
     elapsedMillis echtzeit = 0;
     int time = 0;
@@ -646,17 +663,16 @@ class Bot {
         ballDirection = (irpaket / 16) - 7;
         int zone = irpaket % 16;
         if (zone < 1) {
-          ballSeen = false;
+          ballVisibility = false;
         } else
-          ballSeen = true;
-        if (!ballSeen)
+          ballVisibility = true;
+        if (!ballVisibility)
           ballDirection = 0;
       }
     } else
       Serial.println("IR doesn't answer");
   }
 
- private:
   void evaluatePixy() {
     int signature = 1;
     int pixyBlocks = pixy.ccc.blocks[0].m_signature;
@@ -675,7 +691,6 @@ class Bot {
     }
   }
 
- private:
   void readPixy() {
     pixy.ccc.getBlocks();
 
@@ -688,15 +703,14 @@ class Bot {
     }
   }
 
+ public:
   bool getPixyBlind() {
     return pixyBlind;
   }
 
- private:
-  string siteOfBot() {
-    if (lastCompassOutput != 0)
-      return lastCompassOutput < 0 ? "right" : "left";
-    else
-      return "frontal";
+  bool isInCorner() {
+    // -5 und 5 sind platzhalter-Werte
+    if (pixyBlind && lastGoalDistance < 5 && lastGoalDistance > -5) return true;
+    else return false;
   }
 };
