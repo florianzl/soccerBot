@@ -20,21 +20,23 @@ void play(bool s) {
       bot.drive(bot.directionBehindBall(), 75, bot.getGoalDirection() / -5);
       bot.wait(1000);
       hasKickoff = false;
-    }
-    // bot hat am anfang nicht den Ball
+    } 
     else {
+      // bot hat gerade keinen Anstoß
       if (bot.isInCorner()) {
         bot.getOutOfCorner();
-      } else {
+      } 
+      else {
         if (bot.hasBall()) {
-          // abfrage ob bot in optimaler entfernung mit ball aufs tor schaut um zu schießen
-          if (bot.getGoalDirection() < 3 && bot.getGoalDirection() > -3 && bot.getGoalDistance < 20) {
+          if (bot.getGoalDirection() < 3 && bot.getGoalDirection() > -3 && bot.getGoalDistance() < 20) {
+            //bot ist in optimaler entfernung mit ball zum Tor gerichtet
             bot.strike();
           } else {
             // bot hat ball, guckt aber nicht direkt zum tor oder ist weit weg
+            bot.drive(0,bot.getSpeed(),bot.getGoalDirection() / -5);
           }
         } else {
-          bot.drive(directionBehindBall(), bot.getSpeed(), bot.getGoalDirection() / -5);
+          bot.drive(bot.directionBehindBall(), bot.getSpeed(), bot.getCompass() / -5);
         }
       }
     }
@@ -46,7 +48,7 @@ void play(bool s) {
 
 void preparationMode() {
   if (bot.button(0, 2))
-    bot.kick(30);
+    bot.kick(40);
   else if (bot.button(7, 1))
     bot.setCompass();
 }
@@ -75,7 +77,6 @@ void loop() {
       return;
   }
 }
-
 /*
 void loop() {
   if (modus == 1) {
@@ -101,15 +102,6 @@ void loop() {
     } else
       bot.drive(0, 0, 0);
 
-  }
-
-  // testen der rotation
-  else if (modus == 10) {
-    // bot.drive(0, speed(30), rotate());
-    // bot.drive(0,30,bot.goalDirection() / -5);
-    // Serial.println("richtung: " + String(bot.ballDirection()) + " fahre " + String(directionBehindBall()));
-    //led(WHITE);
-    Serial.println(bot.input(3));
   }
 }
 */

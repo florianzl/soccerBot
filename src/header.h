@@ -72,7 +72,7 @@ class Bot {
   bool ballVisibility;
 
  
-  int goalDirection, goalDistance;
+  int goalDirection, goalDistance, lastGoalDistance;
 
  
   bool portEnabled[8] = {false, false, false, false, false, false, false, false};
@@ -481,10 +481,7 @@ private:
   }
 
   bool hasBall() {
-    if (input(3) > 0) {
-      return false;
-    } else
-      return true;
+    return input(3) == 0 && ballDirection == 0 ? true : false;
   }
 
   int getGoalDirection() {
@@ -493,7 +490,13 @@ private:
   }
 
   int getGoalDistance() {
-    return goalDirection;
+    readPixy();
+    return goalDistance;
+  }
+
+  int getLastGoalDistance() {
+    readPixy();
+    return lastGoalDistance;
   }
 
   int getSpeed() {
@@ -547,15 +550,13 @@ private:
   }
 
   void strike() {
-    for (int i = 50; i < 100; i = i + 3) {
+    for (int i = speed; i < 100; i += 3) {
       drive(0, i, getGoalDirection() / 5);
       delay(1);
     }
     drive(0, 100, getGoalDirection() / 5);
-    delay(20);
-    kick(40);
-    drive(0, -100, 0);
     delay(10);
+    kick(40);
     drive(0, 0, 0);
   }
 
@@ -688,6 +689,7 @@ private:
         goalDistance = 0;
       if (goalDistance > 63)
         goalDistance = 63;
+      lastGoalDistance = goalDistance;
     }
   }
 
