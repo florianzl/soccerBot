@@ -10,33 +10,41 @@ void setup() {
 }
 
 void play(bool s) {
-  bool hasKickoff = s;
+  // NICHT FINALE VERSION
+  bool KickOff = s;
 
   if (bot.ballVisible()) {
+    Serial.println("ballVisible");
     bot.led(0, 2, OFF);
 
-    if (hasKickoff) {
+    if (KickOff) {
+      Serial.println("KickOff");
       // nur effektiv wenn bot seitlich gestellt wird, damit er eine kurve um den gegner macht
+      KickOff = false;
       bot.drive(bot.directionBehindBall(), 75, bot.getGoalDirection() / -5);
-      bot.wait(1000);
-      hasKickoff = false;
-    } 
-    else {
+      bot.wait(500);
+    }
+
+    if(!KickOff) {
+      Serial.println("No KickOff");
       // bot hat gerade keinen Anstoß
       if (bot.isInCorner()) {
+        Serial.println("corn3r");
         bot.getOutOfCorner();
-      } 
-      else {
+      } else {
+        Serial.println("not in corn3r");
         if (bot.hasBall()) {
-          if (bot.getGoalDirection() < 3 && bot.getGoalDirection() > -3 && bot.getGoalDistance() < 20) {
-            //bot ist in optimaler entfernung mit ball zum Tor gerichtet
+          Serial.println("hasBall");
+          if (bot.getGoalDirection() < 3 && bot.getGoalDirection() > -3 && bot.getBallDirection() == 0) {
+            // bot ist mit ball zum Tor gerichtet
             bot.strike();
           } else {
             // bot hat ball, guckt aber nicht direkt zum tor oder ist weit weg
-            bot.drive(0,bot.getSpeed(),bot.getGoalDirection() / -5);
+            bot.drive(0, 60, bot.getGoalDirection() / -5);
           }
         } else {
-          bot.drive(bot.directionBehindBall(), bot.getSpeed(), bot.getCompass() / -5);
+          Serial.println("has no ball");
+          bot.drive(bot.directionBehindBall(), 50, bot.getCompass() / -5);
         }
       }
     }
@@ -48,18 +56,24 @@ void play(bool s) {
 
 void preparationMode() {
   if (bot.button(0, 2))
-    bot.kick(40);
+    bot.kick(45);
   else if (bot.button(7, 1))
     bot.setCompass();
+  else if (bot.button(7, 2)) {
+    Serial.println(String(bot.hasBall()));
+  }
 }
 
 void gameMode() {
   if (bot.button(0, 2))
     bot.pauseBot();
-  else if (bot.button(7, 1))
+  else if (bot.button(7, 1)) {
+    Serial.println("play false");
     play(false);
-  else if (bot.button(7, 2))
+  } else if (bot.button(7, 2)) {
+    Serial.println("play true");
     play(true);
+  }
 }
 
 void loop() {

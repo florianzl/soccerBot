@@ -171,11 +171,11 @@ class Bot {
   
  public:
   void setupBot(bool pixy, bool soccer) {
-    init();
-    epromInit();
     this->hasPixy = pixy;
     this->soccer = soccer;
     this->mode = 0;
+    init();
+    epromInit();
     blinkAll(GREEN);
   }
 
@@ -481,7 +481,7 @@ private:
   }
 
   bool hasBall() {
-    return input(3) == 0 && ballDirection == 0 ? true : false;
+    return input(3) != 0 && ballDirection == 0 ? true : false;
   }
 
   int getGoalDirection() {
@@ -541,8 +541,8 @@ private:
   void kick(int time) {
     if (deathTime < 1000)
       return;
-    if (time > 40)
-      time = 40;
+    if (time > 45)
+      time = 45;
     digitalWrite(kicker, HIGH);
     delay(time);
     digitalWrite(kicker, LOW);
@@ -551,12 +551,12 @@ private:
 
   void strike() {
     for (int i = speed; i < 100; i += 3) {
-      drive(0, i, getGoalDirection() / 5);
+      drive(0, i, getGoalDirection() / -5);
       delay(1);
     }
-    drive(0, 100, getGoalDirection() / 5);
+    drive(0, 100, getGoalDirection() / -5);
     delay(10);
-    kick(40);
+    kick(45);
     drive(0, 0, 0);
   }
 
