@@ -2,49 +2,46 @@
 #include <header.h>
 
 Bot bot;
-bool start;
+int action;
+int start;
+int defense;
 
 void setup() {
   bot.setupBot(true, true);
-  start = true;
+  action = 0;
+  start = 0;
+  defense = 0;
 }
 
 void play(bool s) {
-  // NICHT FINALE VERSION
   bool KickOff = s;
 
   if (bot.ballVisible()) {
-    Serial.println("ballVisible");
     bot.led(0, 2, OFF);
 
     if (KickOff) {
-      Serial.println("KickOff");
       // nur effektiv wenn bot seitlich gestellt wird, damit er eine kurve um den gegner macht
       KickOff = false;
       bot.drive(bot.directionBehindBall(), 75, bot.getGoalDirection() / -5);
       bot.wait(500);
     }
 
-    if(!KickOff) {
-      Serial.println("No KickOff");
-      // bot hat gerade keinen Anstoß
-      if (bot.isInCorner()) {
-        Serial.println("corn3r");
+    else {
+      if (bot.IsInCorner()) {
+        bot.led(7, 2, RED);
         bot.getOutOfCorner();
       } else {
-        Serial.println("not in corn3r");
+        bot.led(7, 2, WHITE);
         if (bot.hasBall()) {
-          Serial.println("hasBall");
-          if (bot.getGoalDirection() < 3 && bot.getGoalDirection() > -3 && bot.getBallDirection() == 0) {
+          if (bot.getGoalDirection() < 3 && bot.getGoalDirection() > -3 && bot.getBallDirection() == 0 && !bot.getPixyBlind()) {
             // bot ist mit ball zum Tor gerichtet
             bot.strike();
           } else {
             // bot hat ball, guckt aber nicht direkt zum tor oder ist weit weg
-            bot.drive(0, 60, bot.getGoalDirection() / -5);
+            bot.drive(0, 60, bot.getGoalDirection() / -2);
           }
         } else {
-          Serial.println("has no ball");
-          bot.drive(bot.directionBehindBall(), 50, bot.getCompass() / -5);
+          bot.drive(bot.directionBehindBall(), bot.getSpeed(), bot.getCompass() / -5);
         }
       }
     }
@@ -55,67 +52,62 @@ void play(bool s) {
 }
 
 void preparationMode() {
-  if (bot.button(0, 2))
+  if (bot.button(0, 2)) {
+    defense = 0;
     bot.kick(45);
-  else if (bot.button(7, 1))
+  } else if (bot.button(7, 1)) {
+    defense = 0;
     bot.setCompass();
-  else if (bot.button(7, 2)) {
-    Serial.println(String(bot.hasBall()));
+  } else if (bot.button(7, 2)) {
+    defense = 1;
   }
 }
 
 void gameMode() {
-  if (bot.button(0, 2))
+  if (bot.button(0, 2)) {
     bot.pauseBot();
-  else if (bot.button(7, 1)) {
-    Serial.println("play false");
-    play(false);
+    action = 0;
+    start = 0;
+  } else if (bot.button(7, 1)) {
+    action = 1;
+    start = 1;
   } else if (bot.button(7, 2)) {
-    Serial.println("play true");
-    play(true);
+    action = 1;
+    start = 0;
   }
 }
 
 void loop() {
   bot.wait(5);
-  if (bot.button(0, 1)) bot.changeMode();
+  if (bot.button(0, 1)) {
+    bot.changeMode();
+    bot.wait(100);
+  }
 
   switch (bot.getMode()) {
     case 0:
-      preparationMode();
       bot.led(0, 1, YELLOW);
-      return;
+      preparationMode();
+      break;
     case 1:
-      gameMode();
       bot.led(0, 1, GREEN);
-      return;
-  }
-}
-/*
-void loop() {
-  if (modus == 1) {
-    if (bot.ball()) {
-      bot.drive(directionBehindBall() / 2, speed, bot.goalDirection() / -5);
-    } else
-      bot.drive(0, 0, bot.goalDirection() / -5);
+      gameMode();
+      break;
   }
 
-  else if (modus == 2) {
-    if (bot.ball()) {
-      if (start) {
-        bot.drive(directionBehindBall() / 2, 75, bot.goalDirection() / -5);
-        bot.warte(1000);
-        start = false;
-      } else {
-        if(bot.pixyBlind && bot.goalDirection() < 5 && bot.goalDirection() > -5) {
-
-
-        }
-        bot.drive(directionBehindBall() / 2, speed, bot.goalDirection() / -5);
+  switch (action) {
+    case 1:
+      switch (start) {
+        case 1:
+          play(true);
+          break;
+        case 0:
+          play(false);
+          break;
       }
-    } else
-      bot.drive(0, 0, 0);
-
+  }
+  switch (defense) {
+    case 1:
+      bot.defense();
   }
 }
-*/

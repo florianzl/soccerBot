@@ -8,10 +8,10 @@
  */
 #include <Arduino.h>
 #include <CAN.h>
+#include <EEPROM.h>
 #include <Pixy2I2C.h>
 #include <Wire.h>
 #include <elapsedMillis.h>
-#include <EEPROM.h>
 Pixy2I2C pixy;
 
 // Farben der LEDs
@@ -58,11 +58,12 @@ Pixy2I2C pixy;
 
 elapsedMillis deathTime;
 elapsedMillis waitTime;
+elapsedMillis cornerTime;
 
 class Bot {
  private:
   byte epromByte[4] = {0, 0, 0, 0};
- 
+
   int speed, mode;
 
   int compass, compassHead, lastCompassOutput;
@@ -71,16 +72,13 @@ class Bot {
   int ballDirection;
   bool ballVisibility;
 
- 
-  int goalDirection, goalDistance, lastGoalDistance;
+  int goalDirection, lastGoalDirection, goalDistance, lastGoalDistance;
 
- 
   bool portEnabled[8] = {false, false, false, false, false, false, false, false};
   bool button1Array[8] = {false, false, false, false, false, false, false, false};
   bool button2Array[8] = {false, false, false, false, false, false, false, false};
   int buttonLedId[8] = {0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27};
 
- 
   int led1Array[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int led2Array[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -168,12 +166,12 @@ class Bot {
       Serial.println("done");
     }
   }
-  
+
  public:
   void setupBot(bool pixy, bool soccer) {
     this->hasPixy = pixy;
     this->soccer = soccer;
-    this->mode = 0;
+    mode = 0;
     init();
     epromInit();
     blinkAll(GREEN);
@@ -185,32 +183,36 @@ class Bot {
   }
 
   void changeMode() {
-    switch(mode){
-      case 0: mode = 1; return;
-      case 1: mode = 0; return;
+    switch (mode) {
+      case 0:
+        mode = 1;
+        return;
+      case 1:
+        mode = 0;
+        return;
     }
   }
 
   bool getMode() {
-    return this->mode;
+    return mode;
   }
 
  private:
   void epromInit() {
-    int x = 0; //platzhalter variable
+    int x = 0;  // platzhalter variable
     readEprom();
     compassHead = epromByte[1] * 265 + epromByte[2];  //  hightbyte,lowbyte
     if (epromByte[0] == x) {
-      //NOTHING
+      // NOTHING
     }
     if (epromByte[1] == x) {
-      //NOTHING
+      // NOTHING
     }
     if (epromByte[2] == x) {
-      //NOTHING
+      // NOTHING
     }
     if (epromByte[3] == x) {
-      //NOTHING
+      // NOTHING
     }
   }
 
@@ -220,12 +222,12 @@ class Bot {
       epromByte[i] = (byte(EEPROM.read(i)));
     }
   }
- 
+
   void writeEprom() {
-    //epromByte[0] = ;
+    // epromByte[0] = ;
     epromByte[1] = compassHead / 256;  // highbyte
     epromByte[2] = compassHead % 256;  // lowbyte
-    //epromByte[3] = ;
+    // epromByte[3] = ;
 
     for (int i = 0; i < 4; i++) {
       EEPROM.write(i, epromByte[i]);
@@ -248,7 +250,6 @@ class Bot {
     }
   }
 
-  
  private:
   void motor(int number, int speed) {
     // Speed wird bei 100 und -100 gekappt
@@ -290,8 +291,8 @@ class Bot {
       rotate = rotate * 100 / maxs;
     }
 
-    switch(direction) {
-      //geradeaus
+    switch (direction) {
+      // geradeaus
       case 0:
         motor(1, -speed + rotate);
         motor(2, -speed + rotate);
@@ -360,53 +361,73 @@ class Bot {
   int directionBehindBall() {
     speed = 50;
     switch (ballDirection) {
+      case 0:
+        speed = 65;
+        return 0;
+
       case 1:
+        speed = 50;
         return 2;
       case -1:
+        speed = 50;
         return -2;
 
       case 2:
-        return 4;
+        speed = 50;
+        return 6;
       case -2:
-        return -4;
+        speed = 50;
+        return -6;
 
       case 3:
-        return 5;
+        speed = 50;
+        return 6;
       case -3:
-        return -5;
+        speed = 50;
+        return -6;
 
       case 4:
+        speed = 43;
         return 6;
       case -4:
+        speed = 43;
         return -6;
 
       case 5:
-        speed = 55;
-        return 7;
+        speed = 43;
+        return 6;
       case -5:
-        speed = 55;
-        return -7;
+        speed = 43;
+        return -6;
 
       case 6:
-       speed = 60;
+        speed = 65;
         return 8;
       case -6:
-        speed = 60;
+        speed = 65;
         return 8;
 
       case 7:
-        speed = 55;
-        return -7;
+        speed = 65;
+        return 8;
       case -7:
-        speed = 55;
-        return 7;
+        speed = 65;
+        return 8;
 
       case 8:
-        return -6;
+        speed = 60;
+        switch (siteOfBot()) {
+          case right:
+            // links über mitte fahren
+            return -6;
+          case left:
+            // rechts über mitte fahren
+            return 6;
+        }
     }
   }
 
-private:
+ private:
   void servo(int pos) {
     if (pos > 100)
       pos = 100;
@@ -414,36 +435,25 @@ private:
       pos = -100;
     ledcWrite(6, 5000 + pos * 30);
   }
-  
-  int siteOfBot() {
-    if (lastCompassOutput != 0)
-      return lastCompassOutput < 0 ? right : left;
-    else
-      return frontal;
-  }
 
  public:
-  void getOutOfCorner() {
-    switch (siteOfBot()) {
-      case right:
-        // bot ist in der rechten ecke
-        if (hasBall()) {
-          drive(0, 40, -10);
-        } else {
-          drive(-3, 70, 0);
-        }
-      case left:
-        // bot ist in der linken ecke
-        if (hasBall()) {
-          drive(0, 40, 10);
-        } else {
-          drive(3, 70, 0);
-        }
-      default:
-        Serial.println("bot faces the goal head on");
+  int siteOfBot() {
+    readPixy();
+    if (hasBall()) {
+      // fährt nach pixy
+      if (compass != 0)
+        return compass < 0 ? right : left;
+      else
+        return frontal;
+    } else {
+      // fährt nach kompass
+      if (lastGoalDirection != 0)
+        return lastGoalDirection < 0 ? right : left;
+      else
+        return frontal;
     }
   }
-  
+
   int input(int number) {
     if (number == 1)
       return (analogRead(INPUT1));
@@ -469,19 +479,17 @@ private:
       return button2Array[device];
     return false;
   }
- 
+
   int getBallDirection() {
     return ballDirection;
   }
 
   int ballVisible() {
-    if (ballVisibility)
-      return true;
-    return false;
+    return ballVisibility;
   }
 
   bool hasBall() {
-    return input(3) != 0 && ballDirection == 0 ? true : false;
+    return (input(3) > 0 && ballDirection == 0);
   }
 
   int getGoalDirection() {
@@ -497,6 +505,11 @@ private:
   int getLastGoalDistance() {
     readPixy();
     return lastGoalDistance;
+  }
+
+  int getLastGoalDirection() {
+    readPixy();
+    return lastGoalDirection;
   }
 
   int getSpeed() {
@@ -680,7 +693,6 @@ private:
 
     if (pixyBlocks == signature) {
       goalDirection = -(pixy.ccc.blocks[0].m_x - 158) / 2;
-      lastCompassOutput = getCompass();
       // int goalWidth = pixy.ccc.blocks[0].m_width;
       int goalHeight = pixy.ccc.blocks[0].m_height;
       int goalDistanceRaw = pixy.ccc.blocks[0].m_y;
@@ -690,6 +702,8 @@ private:
       if (goalDistance > 63)
         goalDistance = 63;
       lastGoalDistance = goalDistance;
+
+      lastGoalDirection = goalDirection;
     }
   }
 
@@ -698,9 +712,11 @@ private:
 
     if (pixy.ccc.numBlocks) {
       evaluatePixy();
+      if (!hasBall())
+        cornerTime = 0;
       pixyBlind = false;
     } else {
-      goalDirection = getCompass();
+      goalDirection = compass;
       pixyBlind = true;
     }
   }
@@ -710,9 +726,30 @@ private:
     return pixyBlind;
   }
 
-  bool isInCorner() {
-    // -5 und 5 sind platzhalter-Werte
-    if (pixyBlind && lastGoalDistance < 5 && lastGoalDistance > -5) return true;
-    else return false;
+  bool IsInCorner() {
+    readPixy();
+    return (ballDirection==0 && cornerTime > 1000);
+  }
+
+  void getOutOfCorner() {
+    drive(0, 10, lastGoalDirection / -3);
+  }
+
+  void defense() {
+    if (ballDirection > 0) {
+      if (ballDirection > 2) {
+        drive(4, 50, compass / -4);
+      } else {
+        drive(4, 40, compass / -4);
+      }
+    } else if (ballDirection < 0) {
+      if (ballDirection < -2) {
+        drive(-4, 50, compass / -4);
+      } else {
+        drive(-4, 40, compass / -4);
+      }
+    } else {
+      drive(0, 0, 0);
+    }
   }
 };
