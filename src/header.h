@@ -509,7 +509,13 @@ class Bot {
 
   int getLastGoalDirection() {
     readPixy();
-    return lastGoalDirection;
+    if (lastGoalDirection < 0) {
+      return -1;
+    }
+    if (lastGoalDirection > 0) {
+      return 1;
+    } else
+      return 0;
   }
 
   int getSpeed() {
@@ -728,28 +734,26 @@ class Bot {
 
   bool IsInCorner() {
     readPixy();
-    return (ballDirection==0 && cornerTime > 1000);
+    return (ballDirection == 0 && cornerTime > 1000);
   }
 
   void getOutOfCorner() {
-    drive(0, 10, lastGoalDirection / -3);
-  }
-
-  void defense() {
-    if (ballDirection > 0) {
-      if (ballDirection > 2) {
-        drive(4, 50, compass / -4);
+    if (hasBall()) {
+      if (lastGoalDirection > 0) {
+        if (compass > -20) {
+          drive(0, 0, getLastGoalDirection() * -30);
+        } else {
+          drive(0, 50, getLastGoalDirection() * -20);
+        }
       } else {
-        drive(4, 40, compass / -4);
-      }
-    } else if (ballDirection < 0) {
-      if (ballDirection < -2) {
-        drive(-4, 50, compass / -4);
-      } else {
-        drive(-4, 40, compass / -4);
+        if (compass < 20) {
+          drive(0, 0, getLastGoalDirection() * -30);
+        } else {
+          drive(0, 50, getLastGoalDirection() * -20);
+        }
       }
     } else {
-      drive(0, 0, 0);
+      drive(directionBehindBall(), 40, compass / -4);
     }
   }
 };

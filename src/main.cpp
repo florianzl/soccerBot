@@ -2,15 +2,13 @@
 #include <header.h>
 
 Bot bot;
-int action;
+int game;
 int start;
-int defense;
 
 void setup() {
   bot.setupBot(true, true);
-  action = 0;
+  game = 0;
   start = 0;
-  defense = 0;
 }
 
 void play(bool s) {
@@ -22,7 +20,7 @@ void play(bool s) {
     if (KickOff) {
       // nur effektiv wenn bot seitlich gestellt wird, damit er eine kurve um den gegner macht
       KickOff = false;
-      bot.drive(bot.directionBehindBall(), 75, bot.getGoalDirection() / -5);
+      bot.drive(0, 75, bot.getGoalDirection() / -3);
       bot.wait(500);
     }
 
@@ -53,26 +51,24 @@ void play(bool s) {
 
 void preparationMode() {
   if (bot.button(0, 2)) {
-    defense = 0;
     bot.kick(45);
   } else if (bot.button(7, 1)) {
-    defense = 0;
     bot.setCompass();
   } else if (bot.button(7, 2)) {
-    defense = 1;
+    Serial.println(bot.getCompass());
   }
 }
 
 void gameMode() {
   if (bot.button(0, 2)) {
     bot.pauseBot();
-    action = 0;
+    game = 0;
     start = 0;
   } else if (bot.button(7, 1)) {
-    action = 1;
+    game = 1;
     start = 1;
   } else if (bot.button(7, 2)) {
-    action = 1;
+    game = 1;
     start = 0;
   }
 }
@@ -95,7 +91,7 @@ void loop() {
       break;
   }
 
-  switch (action) {
+  switch (game) {
     case 1:
       switch (start) {
         case 1:
@@ -105,9 +101,5 @@ void loop() {
           play(false);
           break;
       }
-  }
-  switch (defense) {
-    case 1:
-      bot.defense();
   }
 }
