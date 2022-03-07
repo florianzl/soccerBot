@@ -1,12 +1,14 @@
 #include <Arduino.h>
 #include <header.h>
 
+#define blue 000;
+#define yellow 001;
 Bot bot;
 int game;
 int start;
 
 void setup() {
-  bot.setupBot(true, true);
+  bot.setupBot(true, true, blue);
   game = 0;
   start = 0;
 }

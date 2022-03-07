@@ -55,10 +55,13 @@ Pixy2I2C pixy;
 #define right 1
 #define left 0
 #define frontal -1
+#define blue 000
+#define yelllow 001
 
 elapsedMillis deathTime;
 elapsedMillis waitTime;
 elapsedMillis cornerTime;
+elapsedMillis sameBallDirection;
 
 class Bot {
  private:
@@ -66,13 +69,13 @@ class Bot {
 
   int speed, mode;
 
-  int compass, compassHead, lastCompassOutput;
+  int compass, compassHead;
   bool compassEnabled;
 
-  int ballDirection;
+  int ballDirection, lastBallDirection;
   bool ballVisibility;
 
-  int goalDirection, lastGoalDirection, goalDistance, lastGoalDistance;
+  int goalDirection, lastGoalDirection, goalDistance, goal;
 
   bool portEnabled[8] = {false, false, false, false, false, false, false, false};
   bool button1Array[8] = {false, false, false, false, false, false, false, false};
@@ -136,6 +139,7 @@ class Bot {
     delay(100);
     deathTime = 1000;
     pixyBlind = false;
+    lastBallDirection = 0;
     for (int i = 0; i < 8; i++) {
       Wire.beginTransmission(buttonLedId[i]);
       byte error = Wire.endTransmission();
@@ -168,9 +172,10 @@ class Bot {
   }
 
  public:
-  void setupBot(bool pixy, bool soccer) {
+  void setupBot(bool pixy, bool soccer, int goal) {
     this->hasPixy = pixy;
     this->soccer = soccer;
+    this->goal = goal;
     mode = 0;
     init();
     epromInit();
@@ -285,6 +290,9 @@ class Bot {
  public:
   void drive(int direction, int speed, int rotate) {
     direction = direction / 2;
+    if (sameBallDirection > 1000) {
+      direction = direction * -1;
+    }
     int maxs = abs(speed) + abs(rotate);
     if (maxs > 100) {
       speed = speed * 100 / maxs;
@@ -360,6 +368,10 @@ class Bot {
 
   int directionBehindBall() {
     speed = 50;
+    if (ballDirection != lastBallDirection) {
+      lastBallDirection = ballDirection;
+      sameBallDirection = 0;
+    }
     switch (ballDirection) {
       case 0:
         speed = 65;
@@ -374,17 +386,17 @@ class Bot {
 
       case 2:
         speed = 50;
-        return 6;
+        return 2;
       case -2:
         speed = 50;
-        return -6;
+        return -2;
 
       case 3:
         speed = 50;
-        return 6;
+        return 4;
       case -3:
         speed = 50;
-        return -6;
+        return -4;
 
       case 4:
         speed = 43;
@@ -409,10 +421,10 @@ class Bot {
 
       case 7:
         speed = 65;
-        return 8;
+        return -6;
       case -7:
         speed = 65;
-        return 8;
+        return 6;
 
       case 8:
         speed = 60;
@@ -518,6 +530,22 @@ class Bot {
       return 0;
   }
 
+  int getCompass() {
+    return compass;
+  }
+
+  bool getPixyBlind() {
+    return pixyBlind;
+  }
+
+  void setCompass() {
+    Wire.beginTransmission(compassAddress);
+    byte error = Wire.endTransmission();
+    if (error == 0) {
+      compassHead = compassOrg();
+    }
+  }
+
   int getSpeed() {
     return speed;
   }
@@ -544,13 +572,13 @@ class Bot {
     }
   }
 
-  // lässt jede led in bestimmter farbe für 0.5s leuchten
+  // lässt jede led in bestimmter farbe für 0.05s leuchten
   void blinkAll(int color) {
     led(0, 1, color);
     led(0, 2, color);
     led(7, 1, color);
     led(7, 2, color);
-    wait(100);
+    wait(50);
     led(0, 1, OFF);
     led(0, 2, OFF);
     led(7, 1, OFF);
@@ -597,20 +625,6 @@ class Bot {
     return ((speed * 255) / 100);
   }
 
- public:
-  int getCompass() {
-    return compass;
-  }
-
-  void setCompass() {
-    Wire.beginTransmission(compassAddress);
-    byte error = Wire.endTransmission();
-    if (error == 0) {
-      compassHead = compassOrg();
-    }
-  }
-
- private:
   int compassOrg() {
     unsigned char high_byte, low_byte, angle8;
     unsigned int angle16;
@@ -694,21 +708,20 @@ class Bot {
   }
 
   void evaluatePixy() {
-    int signature = 1;
+    switch (goal) {
+      case yellow:
+        int signature = 1;
+        led(7, 1, YELLOW);
+        break;
+      case blue:
+        int signature = 2;
+        led(7, 1, BLUE);
+        break;
+    }
     int pixyBlocks = pixy.ccc.blocks[0].m_signature;
 
     if (pixyBlocks == signature) {
       goalDirection = -(pixy.ccc.blocks[0].m_x - 158) / 2;
-      // int goalWidth = pixy.ccc.blocks[0].m_width;
-      int goalHeight = pixy.ccc.blocks[0].m_height;
-      int goalDistanceRaw = pixy.ccc.blocks[0].m_y;
-      goalDistance = (goalDistanceRaw - goalHeight) / 4;
-      if (goalDistance < 0)
-        goalDistance = 0;
-      if (goalDistance > 63)
-        goalDistance = 63;
-      lastGoalDistance = goalDistance;
-
       lastGoalDirection = goalDirection;
     }
   }
@@ -728,32 +741,24 @@ class Bot {
   }
 
  public:
-  bool getPixyBlind() {
-    return pixyBlind;
-  }
-
   bool IsInCorner() {
     readPixy();
     return (ballDirection == 0 && cornerTime > 1000);
   }
 
   void getOutOfCorner() {
-    if (hasBall()) {
-      if (lastGoalDirection > 0) {
-        if (compass > -20) {
-          drive(0, 0, getLastGoalDirection() * -30);
-        } else {
-          drive(0, 50, getLastGoalDirection() * -20);
-        }
+    if (lastGoalDirection > 0) {
+      if (compass > -20) {
+        drive(0, 0, getLastGoalDirection() * -30);
       } else {
-        if (compass < 20) {
-          drive(0, 0, getLastGoalDirection() * -30);
-        } else {
-          drive(0, 50, getLastGoalDirection() * -20);
-        }
+        drive(0, 70, getLastGoalDirection() * -20);
       }
     } else {
-      drive(directionBehindBall(), 40, compass / -4);
+      if (compass < 20) {
+        drive(0, 0, getLastGoalDirection() * -30);
+      } else {
+        drive(0, 70, getLastGoalDirection() * -20);
+      }
     }
   }
 };
