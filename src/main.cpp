@@ -40,11 +40,7 @@ void play(bool s) {
           }
         } else {
           // ball nicht in Ballschale
-          if (bot.getBallDirection() == 0) {
-            bot.drive(bot.directionBehindBall(), bot.getSpeed(), bot.getBallDirection() / -5);
-          } else {
-            bot.drive(bot.directionBehindBall(), bot.getSpeed(), bot.getCompass() / -5);
-          }
+          bot.drive(bot.directionBehindBall(), 30, bot.getCompass() / -5);
         }
       }
     }

@@ -433,7 +433,7 @@ class Bot {
             // rechts über mitte fahren
             return 6;
         }
-    }
+        }
   }
 
  private:
