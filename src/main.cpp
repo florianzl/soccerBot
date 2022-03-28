@@ -1,14 +1,12 @@
 #include <Arduino.h>
 #include <header.h>
 
-#define blue 000;
-#define yellow 001;
 Bot bot;
 int game;
 int start;
 
 void setup() {
-  bot.setupBot(true, true, blue);
+  bot.setupBot(true, true);
   game = 0;
   start = 0;
 }
@@ -22,7 +20,7 @@ void play(bool s) {
     if (KickOff) {
       // nur effektiv wenn bot seitlich gestellt wird, damit er eine kurve um den gegner macht
       KickOff = false;
-      bot.drive(0, 75, bot.getGoalDirection() / -3);
+      bot.drive(0, 75, bot.getGoalDirection() / -2);
       bot.wait(500);
     }
 
@@ -33,7 +31,7 @@ void play(bool s) {
       } else {
         bot.led(7, 2, WHITE);
         if (bot.hasBall()) {
-          if (bot.getGoalDirection() < 3 && bot.getGoalDirection() > -3 && bot.getBallDirection() == 0 && !bot.getPixyBlind()) {
+          if (bot.getGoalDirection() < 10 && bot.getGoalDirection() > -10 && bot.hasBall() && !bot.getPixyBlind()) {
             // bot ist mit ball zum Tor gerichtet
             bot.strike();
           } else {
@@ -41,13 +39,19 @@ void play(bool s) {
             bot.drive(0, 60, bot.getGoalDirection() / -2);
           }
         } else {
-          bot.drive(bot.directionBehindBall(), bot.getSpeed(), bot.getCompass() / -5);
+          // ball nicht in Ballschale
+          if (bot.getBallDirection() == 0) {
+            bot.drive(bot.directionBehindBall(), bot.getSpeed(), bot.getBallDirection() / -5);
+          } else {
+            bot.drive(bot.directionBehindBall(), bot.getSpeed(), bot.getCompass() / -5);
+          }
         }
       }
     }
   } else {
+    // ball wird nicht gesehen
     bot.led(0, 2, RED);
-    bot.drive(0, 0, 0);
+    bot.drive(0, 0, bot.getGoalDirection() / -1);
   }
 }
 
@@ -57,7 +61,7 @@ void preparationMode() {
   } else if (bot.button(7, 1)) {
     bot.setCompass();
   } else if (bot.button(7, 2)) {
-    Serial.println(bot.getCompass());
+    Serial.println(bot.getBallDirection());
   }
 }
 

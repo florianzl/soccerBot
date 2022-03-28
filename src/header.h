@@ -55,8 +55,6 @@ Pixy2I2C pixy;
 #define right 1
 #define left 0
 #define frontal -1
-#define blue 000
-#define yelllow 001
 
 elapsedMillis deathTime;
 elapsedMillis waitTime;
@@ -75,7 +73,7 @@ class Bot {
   int ballDirection, lastBallDirection;
   bool ballVisibility;
 
-  int goalDirection, lastGoalDirection, goalDistance, goal;
+  int goalDirection, lastGoalDirection, goalDistance;
 
   bool portEnabled[8] = {false, false, false, false, false, false, false, false};
   bool button1Array[8] = {false, false, false, false, false, false, false, false};
@@ -172,10 +170,9 @@ class Bot {
   }
 
  public:
-  void setupBot(bool pixy, bool soccer, int goal) {
+  void setupBot(bool pixy, bool soccer) {
     this->hasPixy = pixy;
     this->soccer = soccer;
-    this->goal = goal;
     mode = 0;
     init();
     epromInit();
@@ -374,56 +371,56 @@ class Bot {
     }
     switch (ballDirection) {
       case 0:
-        speed = 65;
+        speed = 50;
         return 0;
 
       case 1:
-        speed = 50;
+        speed = 45;
         return 2;
       case -1:
-        speed = 50;
+        speed = 45;
         return -2;
 
       case 2:
-        speed = 50;
-        return 2;
+        speed = 40;
+        return 4;
       case -2:
-        speed = 50;
-        return -2;
+        speed = 40;
+        return -4;
 
       case 3:
-        speed = 50;
+        speed = 40;
         return 4;
       case -3:
-        speed = 50;
+        speed = 40;
         return -4;
 
       case 4:
-        speed = 43;
-        return 6;
+        speed = 40;
+        return 4;
       case -4:
-        speed = 43;
-        return -6;
+        speed = 40;
+        return -4;
 
       case 5:
-        speed = 43;
+        speed = 50;
         return 6;
       case -5:
-        speed = 43;
+        speed = 50;
         return -6;
 
       case 6:
-        speed = 65;
+        speed = 60;
         return 8;
       case -6:
-        speed = 65;
+        speed = 60;
         return 8;
 
       case 7:
-        speed = 65;
+        speed = 50;
         return -6;
       case -7:
-        speed = 65;
+        speed = 50;
         return 6;
 
       case 8:
@@ -514,11 +511,6 @@ class Bot {
     return goalDistance;
   }
 
-  int getLastGoalDistance() {
-    readPixy();
-    return lastGoalDistance;
-  }
-
   int getLastGoalDirection() {
     readPixy();
     if (lastGoalDirection < 0) {
@@ -598,10 +590,10 @@ class Bot {
 
   void strike() {
     for (int i = speed; i < 100; i += 3) {
-      drive(0, i, getGoalDirection() / -5);
+      drive(0, i, getGoalDirection() / -1);
       delay(1);
     }
-    drive(0, 100, getGoalDirection() / -5);
+    drive(0, 100, getGoalDirection() / -1);
     delay(10);
     kick(45);
     drive(0, 0, 0);
@@ -708,16 +700,7 @@ class Bot {
   }
 
   void evaluatePixy() {
-    switch (goal) {
-      case yellow:
-        int signature = 1;
-        led(7, 1, YELLOW);
-        break;
-      case blue:
-        int signature = 2;
-        led(7, 1, BLUE);
-        break;
-    }
+    int signature = 1;
     int pixyBlocks = pixy.ccc.blocks[0].m_signature;
 
     if (pixyBlocks == signature) {
@@ -749,15 +732,15 @@ class Bot {
   void getOutOfCorner() {
     if (lastGoalDirection > 0) {
       if (compass > -20) {
-        drive(0, 0, getLastGoalDirection() * -30);
+        drive(0, 0, getLastGoalDirection() * -15);
       } else {
-        drive(0, 70, getLastGoalDirection() * -20);
+        drive(0, 55, getLastGoalDirection() * -15);
       }
     } else {
       if (compass < 20) {
-        drive(0, 0, getLastGoalDirection() * -30);
+        drive(0, 0, getLastGoalDirection() * -15);
       } else {
-        drive(0, 70, getLastGoalDirection() * -20);
+        drive(0, 55, getLastGoalDirection() * -15);
       }
     }
   }
