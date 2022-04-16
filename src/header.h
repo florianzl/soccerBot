@@ -59,7 +59,6 @@ Pixy2I2C pixy;
 elapsedMillis deathTime;
 elapsedMillis waitTime;
 elapsedMillis cornerTime;
-elapsedMillis sameBallDirection;
 
 class Bot {
  private:
@@ -70,7 +69,7 @@ class Bot {
   int compass, compassHead;
   bool compassEnabled;
 
-  int ballDirection, lastBallDirection;
+  int ballDirection;
   bool ballVisibility;
 
   int goalDirection, lastGoalDirection, goalDistance;
@@ -137,7 +136,6 @@ class Bot {
     delay(100);
     deathTime = 1000;
     pixyBlind = false;
-    lastBallDirection = 0;
     for (int i = 0; i < 8; i++) {
       Wire.beginTransmission(buttonLedId[i]);
       byte error = Wire.endTransmission();
@@ -286,10 +284,7 @@ class Bot {
    */
  public:
   void drive(int direction, int speed, int rotate) {
-    direction = direction / 2;
-    if (sameBallDirection > 1000) {
-      direction = direction * -1;
-    }
+    direction = direction / -2;
     int maxs = abs(speed) + abs(rotate);
     if (maxs > 100) {
       speed = speed * 100 / maxs;
@@ -365,10 +360,7 @@ class Bot {
 
   int directionBehindBall() {
     speed = 50;
-    if (ballDirection != lastBallDirection) {
-      lastBallDirection = ballDirection;
-      sameBallDirection = 0;
-    }
+    Serial.println("balldirection: " + String(ballDirection));
     switch (ballDirection) {
       case 0:
         speed = 50;
@@ -390,17 +382,17 @@ class Bot {
 
       case 3:
         speed = 40;
-        return 4;
+        return 6;
       case -3:
         speed = 40;
-        return -4;
+        return -6;
 
       case 4:
         speed = 40;
-        return 4;
+        return 6;
       case -4:
         speed = 40;
-        return -4;
+        return -6;
 
       case 5:
         speed = 50;
@@ -418,10 +410,9 @@ class Bot {
 
       case 7:
         speed = 50;
-        return -6;
-      case -7:
+        return -8;
         speed = 50;
-        return 6;
+        return 8;
 
       case 8:
         speed = 60;
@@ -433,7 +424,7 @@ class Bot {
             // rechts über mitte fahren
             return 6;
         }
-        }
+    }
   }
 
  private:

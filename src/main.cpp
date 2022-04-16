@@ -40,7 +40,11 @@ void play(bool s) {
           }
         } else {
           // ball nicht in Ballschale
-          bot.drive(bot.directionBehindBall(), 30, bot.getCompass() / -5);
+          if (bot.getBallDirection() == 1 || bot.getBallDirection() == -1) {
+            bot.drive(bot.directionBehindBall(), 30, bot.getBallDirection() * -15);
+          } else {
+            bot.drive(bot.directionBehindBall(), 30, bot.getCompass() / -5);
+          }
         }
       }
     }
@@ -57,7 +61,8 @@ void preparationMode() {
   } else if (bot.button(7, 1)) {
     bot.setCompass();
   } else if (bot.button(7, 2)) {
-    Serial.println(bot.getBallDirection());
+    bot.drive(bot.getBallDirection(), 20, bot.getCompass() / -5);
+    Serial.println("preparation" + String(bot.getBallDirection()));
   }
 }
 
