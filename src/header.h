@@ -721,17 +721,25 @@ class Bot {
 
   void getOutOfCorner() {
     if (lastGoalDirection > 0) {
+      /*
       if (compass > -25) {
         drive(0, 0, getLastGoalDirection() * -15);
       } else {
         drive(0, 40, 0);
       }
+      */
+
+      drive(getLastGoalDirection * -4, 40, compass / -1);
     } else {
+      /*
       if (compass < 25) {
         drive(0, 0, getLastGoalDirection() * -15);
       } else {
         drive(0, 40, 0);
       }
+      */
+
+      drive(getLastGoalDirection * -4, 40, compass / -1);
     }
   }
 };
