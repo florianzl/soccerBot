@@ -26,7 +26,7 @@ void play(bool s) {
     } else {
       // roboter hat keinen anstoß
 
-      if (bot.IsInCorner()) {
+      if (false) {
         bot.led(7, 2, RED);
         bot.getOutOfCorner();
       } else {

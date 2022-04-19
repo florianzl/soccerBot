@@ -363,42 +363,42 @@ class Bot {
     Serial.println("balldirection: " + String(ballDirection));
     switch (ballDirection) {
       case 0:
-        speed = 50;
+        speed = 65;
         return 0;
 
       case 1:
-        speed = 45;
+        speed = 50;
         return 2;
       case -1:
-        speed = 45;
+        speed = 50;
         return -2;
 
       case 2:
-        speed = 40;
+        speed = 50;
         return 4;
       case -2:
-        speed = 40;
+        speed = 50;
         return -4;
 
       case 3:
-        speed = 40;
+        speed = 55;
         return 6;
       case -3:
-        speed = 40;
+        speed = 55;
         return -6;
 
       case 4:
-        speed = 40;
+        speed = 60;
         return 6;
       case -4:
-        speed = 40;
+        speed = 60;
         return -6;
 
       case 5:
-        speed = 50;
+        speed = 60;
         return 6;
       case -5:
-        speed = 50;
+        speed = 60;
         return -6;
 
       case 6:
@@ -580,14 +580,13 @@ class Bot {
   }
 
   void strike() {
-    for (int i = speed; i < 100; i += 3) {
+    for (int i = 60; i < 100; i += 3) {
       drive(0, i, getGoalDirection() / -1);
       delay(1);
     }
     drive(0, 100, getGoalDirection() / -1);
     delay(10);
     kick(45);
-    drive(0, 0, 0);
   }
 
  private:
@@ -717,21 +716,21 @@ class Bot {
  public:
   bool IsInCorner() {
     readPixy();
-    return (ballDirection == 0 && cornerTime > 1000);
+    return (hasBall() && cornerTime > 1000);
   }
 
   void getOutOfCorner() {
     if (lastGoalDirection > 0) {
-      if (compass > -20) {
+      if (compass > -25) {
         drive(0, 0, getLastGoalDirection() * -15);
       } else {
-        drive(0, 55, 0);
+        drive(0, 40, 0);
       }
     } else {
-      if (compass < 20) {
+      if (compass < 25) {
         drive(0, 0, getLastGoalDirection() * -15);
       } else {
-        drive(0, 55, 0);
+        drive(0, 40, 0);
       }
     }
   }
