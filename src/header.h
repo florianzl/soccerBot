@@ -725,13 +725,13 @@ class Bot {
       if (compass > -20) {
         drive(0, 0, getLastGoalDirection() * -15);
       } else {
-        drive(0, 55, getLastGoalDirection() * -15);
+        drive(0, 55, 0);
       }
     } else {
       if (compass < 20) {
         drive(0, 0, getLastGoalDirection() * -15);
       } else {
-        drive(0, 55, getLastGoalDirection() * -15);
+        drive(0, 55, 0);
       }
     }
   }
