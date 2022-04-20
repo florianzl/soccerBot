@@ -729,7 +729,7 @@ class Bot {
       }
       */
 
-      drive(getLastGoalDirection * -4, 40, compass / -1);
+      drive(getLastGoalDirection() * -4, 40, compass * -2);
     } else {
       /*
       if (compass < 25) {
@@ -739,7 +739,7 @@ class Bot {
       }
       */
 
-      drive(getLastGoalDirection * -4, 40, compass / -1);
+      drive(getLastGoalDirection() * -4, 40, compass * -2);
     }
   }
 };
