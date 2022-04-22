@@ -60,7 +60,7 @@ void preparationMode() {
   } else if (bot.button(7, 1)) {
     bot.setCompass();
   } else if (bot.button(7, 2)) {
-    Serial.println(bot.hasBall());
+    Serial.println("");
   }
 }
 

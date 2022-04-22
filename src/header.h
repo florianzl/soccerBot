@@ -367,17 +367,17 @@ class Bot {
         return 0;
 
       case 1:
-        speed = 50;
+        speed = 45;
         return 2;
       case -1:
-        speed = 50;
+        speed = 45;
         return -2;
 
       case 2:
-        speed = 50;
+        speed = 45;
         return 4;
       case -2:
-        speed = 50;
+        speed = 45;
         return -4;
 
       case 3:
@@ -721,25 +721,11 @@ class Bot {
 
   void getOutOfCorner() {
     if (lastGoalDirection > 0) {
-      /*
-      if (compass > -25) {
-        drive(0, 0, getLastGoalDirection() * -15);
-      } else {
-        drive(0, 40, 0);
-      }
-      */
-
-      drive(getLastGoalDirection() * -4, 40, compass * -2);
+      drive(getLastGoalDirection() * -4, 40, compass * -1);
     } else {
-      /*
-      if (compass < 25) {
-        drive(0, 0, getLastGoalDirection() * -15);
-      } else {
-        drive(0, 40, 0);
-      }
-      */
-
-      drive(getLastGoalDirection() * -4, 40, compass * -2);
+      drive(getLastGoalDirection() * -4, 40, compass * -1);
     }
   }
+
+  // funktioniert: drive(getLastGoalDirection() * -4, 40, compass * -2); aber dreht sich zu schnell
 };
