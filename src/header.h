@@ -59,6 +59,7 @@ Pixy2I2C pixy;
 elapsedMillis deathTime;
 elapsedMillis waitTime;
 elapsedMillis cornerTime;
+elapsedMillis stuckTime;
 
 class Bot {
  private:
@@ -363,7 +364,7 @@ class Bot {
     Serial.println("balldirection: " + String(ballDirection));
     switch (ballDirection) {
       case 0:
-        speed = 65;
+        speed = 70;
         return 0;
 
       case 1:
@@ -374,25 +375,55 @@ class Bot {
         return -2;
 
       case 2:
-        speed = 45;
-        return 4;
+        if (goalDistance > 62) {
+          speed = 45;
+          return 2;
+        } else {
+          speed = 50;
+          return 4;
+        }
       case -2:
-        speed = 45;
-        return -4;
+        if (goalDistance > 62) {
+          speed = 45;
+          return -2;
+        } else {
+          speed = 50;
+          return -4;
+        }
 
       case 3:
-        speed = 55;
-        return 6;
+        if (goalDistance > 62) {
+          speed = 55;
+          return 4;
+        } else {
+          speed = 55;
+          return 6;
+        }
       case -3:
-        speed = 55;
-        return -6;
+        if (goalDistance > 62) {
+          speed = 55;
+          return -4;
+        } else {
+          speed = 55;
+          return -6;
+        }
 
       case 4:
-        speed = 60;
-        return 6;
+        if (goalDistance > 62) {
+          speed = 70;
+          return 4;
+        } else {
+          speed = 60;
+          return 6;
+        }
       case -4:
-        speed = 60;
-        return -6;
+        if (goalDistance > 62) {
+          speed = 70;
+          return -4;
+        } else {
+          speed = 60;
+          return -6;
+        }
 
       case 5:
         speed = 60;
@@ -402,16 +433,16 @@ class Bot {
         return -6;
 
       case 6:
-        speed = 60;
+        speed = 65;
         return 8;
       case -6:
-        speed = 60;
+        speed = 65;
         return 8;
 
       case 7:
-        speed = 50;
+        speed = 65;
         return -8;
-        speed = 50;
+        speed = 65;
         return 8;
 
       case 8:
@@ -419,10 +450,10 @@ class Bot {
         switch (siteOfBot()) {
           case right:
             // links über mitte fahren
-            return -6;
+            return 6;
           case left:
             // rechts über mitte fahren
-            return 6;
+            return -6;
         }
     }
   }
@@ -580,12 +611,6 @@ class Bot {
   }
 
   void strike() {
-    for (int i = 60; i < 100; i += 3) {
-      drive(0, i, getGoalDirection() / -1);
-      delay(1);
-    }
-    drive(0, 100, getGoalDirection() / -1);
-    delay(10);
     kick(45);
   }
 
@@ -695,6 +720,7 @@ class Bot {
 
     if (pixyBlocks == signature) {
       goalDirection = -(pixy.ccc.blocks[0].m_x - 158) / 2;
+      goalDistance = -(pixy.ccc.blocks[0].m_y - 158) / 2;
       lastGoalDirection = goalDirection;
     }
   }
@@ -720,12 +746,7 @@ class Bot {
   }
 
   void getOutOfCorner() {
-    if (lastGoalDirection > 0) {
-      drive(getLastGoalDirection() * -4, 40, compass * -1);
-    } else {
-      drive(getLastGoalDirection() * -4, 40, compass * -1);
-    }
+    drive(getLastGoalDirection() * -4, 55, compass * -1.5);
   }
-
   // funktioniert: drive(getLastGoalDirection() * -4, 40, compass * -2); aber dreht sich zu schnell
 };

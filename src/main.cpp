@@ -4,49 +4,42 @@
 Bot bot;
 int game;
 int start;
+int challenge;
 
 void setup() {
   bot.setupBot(true, true);
   game = 0;
   start = 0;
+  challenge = 0;
 }
 
-void play(bool s) {
-  bool kickOff = s;
-
+void play() {
   if (bot.ballVisible()) {
     bot.led(0, 2, OFF);
 
-    if (kickOff) {
-      // möglichst schnell am anfang tor erzielen
-      // roboter schräg hinstellen, damit eine kurve um den anderen roboter gefahren wird
-      kickOff = false;
-      bot.drive(0, 75, bot.getGoalDirection() / -2);
-      bot.wait(500);
+    // roboter hat keinen anstoß
+    if (bot.IsInCorner()) {
+      bot.led(7, 2, RED);
+      bot.getOutOfCorner();
     } else {
-      // roboter hat keinen anstoß
-      if (bot.IsInCorner()) {
-        bot.led(7, 2, RED);
-        bot.getOutOfCorner();
-      } else {
-        // roboter ist nicht in der ecke
-        bot.led(7, 2, WHITE);
+      // roboter ist nicht in der ecke
+      bot.led(7, 2, WHITE);
 
-        if (bot.hasBall()) {
-          if (bot.getGoalDirection() < 10 && bot.getGoalDirection() > -10 && !bot.getPixyBlind()) {
-            // bot ist mit ball zum Tor gerichtet
-            bot.strike();
-          } else {
-            // bot hat ball, guckt aber nicht direkt zum tor
-            bot.drive(0, 60, bot.getGoalDirection() / -2);
-          }
-
+      if (bot.hasBall()) {
+        if (bot.getGoalDirection() < 10 && bot.getGoalDirection() > -10 && !bot.getPixyBlind()) {
+          // bot ist mit ball zum Tor gerichtet
+          bot.strike();
         } else {
-          // ball ist nicht in Ballschale
-          bot.drive(bot.directionBehindBall(), bot.getSpeed(), bot.getCompass() / -5);
+          // bot hat ball, guckt aber nicht direkt zum tor
+          bot.drive(0, 60, bot.getGoalDirection() / -1.7);
         }
+
+      } else {
+        // ball ist nicht in Ballschale
+        bot.drive(bot.directionBehindBall(), bot.getSpeed(), bot.getCompass() / -5);
       }
     }
+
   } else {
     // ball wird nicht gesehen
     bot.led(0, 2, RED);
@@ -60,7 +53,7 @@ void preparationMode() {
   } else if (bot.button(7, 1)) {
     bot.setCompass();
   } else if (bot.button(7, 2)) {
-    Serial.println("");
+    Serial.println(bot.getGoalDistance());
   }
 }
 
@@ -98,14 +91,13 @@ void loop() {
         case 1:
           switch (start) {
             case 1:
-              play(true);
+              play();
               break;
             case 0:
-              play(false);
+              play();
               break;
           }
       }
-
       break;
   }
 }
